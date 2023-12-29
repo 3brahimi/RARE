@@ -1,0 +1,38 @@
+{
+    "models": [
+        {
+            "type": "LR",
+            "training": ["clean"],
+            "validation": ["clean"],
+            "testing": ["clean"],
+            "model_path": "LR_training_clean_validation_clean",
+            "epochs": 100
+        }
+        ,
+        {
+            "type": "LR",
+            "training": ["clean","gx"],
+            "validation": ["clean","gx"],
+            "testing": ["clean"],
+            "model_path": "LR_training_clean_gx_validation_gx",
+            "epochs": 100
+        },
+        {
+            "type": "LR",
+            "training": ["clean"],
+            "validation": ["gx"],
+            "testing": ["clean"],
+            "model_path": "LR_training_clean_validation_gx",
+            "epochs": 100
+        },
+        {
+            "type": "LR",
+            "training": ["clean","gx"],
+            "validation": ["clean"],
+            "testing": ["clean"],
+            "model_path": "LR_training_clean_gx_validation_clean",
+        }
+
+
+    ]
+}
