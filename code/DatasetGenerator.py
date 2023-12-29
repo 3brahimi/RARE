@@ -26,7 +26,10 @@ class DatasetGenerator:
 
     def make_equation(self, equation_str):
                 eq_expr = sp.sympify(equation_str)
-                eq = sp.lambdify('x', eq_expr, 'numpy')
+           
+                symbols = sorted(eq_expr.free_symbols, key=lambda x: x.name)
+           
+                eq = sp.lambdify([symbol.name for symbol in symbols], eq_expr, 'numpy')
                 return eq
     def generate_dataset(self):
         """
