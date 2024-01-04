@@ -10,13 +10,7 @@ def calculate_ditances(x, x_max, x_min):
     distsmax, distsmin = [], []
     distsmax = abs(x_max - x)
     distsmin = abs(x_min - x)
-    # for idx, item in enumerate(x):
-        
-    #   ### L1 distance between each point and the max
-    #   distsmax.append(abs(x_max[idx] -  item))
-      
-    #   ### L1 distance between each point and the min
-    #   distsmin.append(abs(x_min[idx] -  item))
+
     return [distsmax, distsmin]
 
 

@@ -83,6 +83,7 @@ class BaseModel:
         Loads a saved model.
 
         Args:
+            cls (BaseModel): The BaseModel class.
             filepath (str): The path to the saved model.
             loss_function (str): The loss function to be used for model training.
 
@@ -97,6 +98,19 @@ class BaseModel:
     
     
 class LinearModel(BaseModel):
+    def __init__(self, input_shape, loss_function):
+        """
+        Initialize a LinearModel object.
+
+        Args:
+            input_shape (int): The input shape of the model.
+            loss_function (str): The loss function to be used for training the model.
+            
+        """
+        super().__init__(loss_function)
+        self.input_shape = input_shape
+        self.model = self.model_architecture()
+        
     def model_architecture(self):
         """
         Creates and returns a Keras Sequential model with a single Dense layer.
@@ -105,7 +119,7 @@ class LinearModel(BaseModel):
             model (tf.keras.models.Sequential): The created model.
         """
         model = tf.keras.models.Sequential([
-            tf.keras.layers.Dense(1, input_shape=[1])
+            tf.keras.layers.Dense(1, input_shape=[self.input_shape])
         ])
         return model
     #     model = tf.keras.models.Sequential([
@@ -114,9 +128,33 @@ class LinearModel(BaseModel):
     #     tf.keras.layers.Dense(1)
     #     ])
     #     return model
-    
-    
+    def load_model(self, filepath):
+        """
+        Loads a saved model.
 
+        Args:
+            cls (BaseModel): The BaseModel class.
+            filepath (str): The path to the saved model.
+            loss_function (str): The loss function to be used for model training.
+
+        Returns:
+            LinearModel: An instance of the LinearModel class with the loaded model.
+        """
+        model = tf.keras.models.load_model(filepath)
+        return model
+    
+    def save_model(self, path):
+        """
+        Saves the model to a file.
+
+        Args:
+            path (str): The path to save the model.
+
+        """
+        # with open(path, 'wb') as f:
+        #     pickle.dump(self.model, f)
+        self.model.save(f"{path}/model.pkl")
+        
 
 class CNNModel(BaseModel):
     def model_architecture(self):

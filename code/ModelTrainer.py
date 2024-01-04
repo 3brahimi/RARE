@@ -10,8 +10,8 @@ class ModelTrainer:
             # Add more architectures here...
         }
 
-    def get_model(self, model_name, loss_function):
+    def get_model(self, model_name, input_shape, loss_function):
         if model_name in self.model_architectures:
-            return self.model_architectures[model_name](loss_function)
+            return self.model_architectures[model_name](input_shape, loss_function)
         else:
             raise ValueError(f"Model architecture '{model_name}' not recognized.")

@@ -7,46 +7,21 @@
             "training": ["clean"],
             "validation": ["clean"],
             "testing": ["clean"],
-            "model_path": "linear_training_clean_validation_clean",
-            "pretrained": "linear_training_clean_validation_gx.pkl",
+            "model_path": "E:/crml/code/results_20240103232127/models/linear_training_clean_validation_clean/model.pkl",
+            "load": true,
             "fit_args": {
                 "epochs": 100,
                 "early_stopping": 10
+            },
+            "noisy_input_feats" :[0]
+        }
+          ],
+          
+          "features":{
+            "x1": {
+                "type": "float",
+                "range": [-3, 3]
             }
         }
-        ,
-        {
-            "type": "linear",
-            "training": ["clean","gx"],
-            "validation": ["clean","gx"],
-            "testing": ["clean"],
-            "model_path": "linear_training_clean_gx_validation_gx",
-            "fit_args": {
-                "epochs": 100,
-                "early_stopping": 10
-            }
-        },
-        {
-            "type": "linear",
-            "training": ["clean"],
-            "validation": ["gx"],
-            "testing": ["clean"],
-            "model_path": "linear_training_clean_validation_gx",
-            "fit_args": {
-                "epochs": 100,
-                "early_stopping": 10
-            }
-        },
-        {
-            "type": "linear",
-            "training": ["clean","gx"],
-            "validation": ["clean"],
-            "testing": ["clean"],
-            "model_path": "linear_training_clean_gx_validation_clean",
-            "fit_args": {
-                "epochs": 100,
-                "early_stopping": 10
-            }
-        }
-    ]
+
 }
