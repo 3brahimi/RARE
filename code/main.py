@@ -1,27 +1,14 @@
 import datetime
 import os
-from matplotlib import pyplot as plt
-from NoiseGenerator import NoiseGenerator
+from DataGens import NoiseGenerator, DatasetGenerator
 import numpy as np
-from DatasetGenerator import DatasetGenerator
-from ModelTrainer import ModelTrainer
+from Training.ModelTrainer import ModelTrainer
 import tensorflow as tf
 import json
 
-from Models import LinearModel
-from RobustnessMetric import RobustnessMetric
-from helpers import evaluate_and_plot
+from Metric.RobustnessMetric import RobustnessMetric
+from utils.helpers import evaluate_and_plot
 
-# Define the equation for the clean signals
-# def equation(x):
-#     return 2 * x + 3
-
-# model architecture function
-def model_architecture():
-    model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(1, input_shape=[1])
-    ])
-    return model
 
 # get the data based on the type 
 def get_data(data_types, x_clean, y_clean, x_noisy, y_noisy):
@@ -45,7 +32,7 @@ def main():
     models_folder = f"{res_folder}/models"
     plots_folder = f"{res_folder}/plots"
     
-    with open('./config.json') as f:
+    with open('./configs/config.json') as f:
         configs = json.load(f)
     
     noise_model = NoiseGenerator(x_len, num_noises, distribution, percentage)
@@ -58,7 +45,7 @@ def main():
     for config in configs["models"]:
         xy_train, xy_valid, xy_test= dataset_generator.split(config)
         
-        trainer = ModelTrainer().get_model(config["type"], input_shape=1, loss_function='mean_squared_error')
+        trainer = ModelTrainer().get_model(config["type"], shape_input=1, loss_function='mean_squared_error')
         if config["load"] == True:
             model_path = config["model_path"]
             model = trainer.load_model(f"{model_path}/model.pkl")
