@@ -1,0 +1,26 @@
+{
+    "equation": ["3*x", "x ** 2"],
+
+    "models": [
+        {
+            "type": "linear",
+            "training": ["clean"],
+            "validation": ["clean"],
+            "testing": ["clean"],
+            "model_path": "E:/crml/code/results_multi_outputs/models/linear_training_clean_validation_clean",
+            "load": true,
+            "fit_args": {
+                "epochs": 100,
+                "early_stopping": 10
+            },
+            "noisy_input_feats": [0]
+        }
+    ],
+    "features":{
+        "x": {
+            "type": "float",
+            "range": [-3, 3]
+        }
+       
+    }
+}

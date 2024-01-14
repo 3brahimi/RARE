@@ -1,0 +1,31 @@
+{
+    "equation": "x1 ** 2 - 1.7 * x2",
+
+    "models": [
+        {
+            "type": "linear",
+            "training": ["clean", "gx"],
+            "validation": ["clean"],
+            "testing": ["clean"],
+            "model_path": "noise_aware_training/models_all",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 2,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [0, 1]
+        }
+        ],
+        "features":{
+            "x1": {
+                "type": "float",
+                "range": [-3, 3]
+            },
+            "x2": {
+                "type": "float",
+                "range": [-3, 3]
+            }
+        }
+    }
+    
