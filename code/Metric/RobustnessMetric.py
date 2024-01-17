@@ -373,10 +373,10 @@ class RobustnessMetric:
         if x_hat is not None:
             x_bounds = self.extract_bounds(x_hat)
         x_dists = self.bounds_distance(x, (x_bounds[0], x_bounds[1]), dist)
-
         x_dists_agg = self.aggregate_Q(x_dists, Q)
-        # construct G of input 
-        gx = self.construct_G(x_dists_agg, x_dists[0], x_dists[1], x_bounds[0], x_bounds[1], Q)
+        
+        # construct G of input
+        gx = self.construct_G(aggregated_distances=x_dists_agg, distsmax=x_dists[0], distsmin=x_dists[1], max_bound=x_bounds[0], min_bound=x_bounds[1], Q=Q)
         
         return gx["G"]
     
