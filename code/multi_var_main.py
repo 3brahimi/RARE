@@ -7,6 +7,8 @@ from Training.ModelTrainer import ModelTrainer
 from utils.helpers import evaluate_and_plot, evaluate
 from Metric.RobustnessMetric import RobustnessMetric
 from Metric.weights_estimation import estimate_weights
+import torch
+import tensorflow as tf
 
 def main():
 
@@ -15,7 +17,8 @@ def main():
     distribution = 'normal'
     percentage = 0.5
     # res_folder = f"results_multi_var_noises_{num_noises}_2_testing"
-    res_folder = f"./test_temp"
+    res_folder = f"./results_normal_training_sign_distances"
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
     with open('./configs/multi_var_config.json') as f:
         configs = json.load(f)
@@ -34,7 +37,10 @@ def main():
         
         models_folder = f"{res_folder}/{config['type']}/{config['training_type']}/models_all"
         plots_folder = f"{res_folder}/{config['type']}/{config['training_type']}/plots"
-        xy_train, xy_valid, xy_test, _ , _, _, _= dataset_generator.split(config)
+        xy_train, xy_valid, xy_test, _ , _, _, _= dataset_generator.split(config, metric_instance=metric)
+
+        # move the data to the device
+        
         if training_type == "noise-aware":
             input_shape = num_inputs * 2
         
@@ -43,15 +49,21 @@ def main():
             model_path = config["model_path"]
             if "models_all" in model_path:
                 models = []
+                if config["training_type"] == "clean":
+                    models_num = 1
+                else:
+                    models_num = 10
                 losses = np.loadtxt(f"{model_path}/losses.txt")
-                for i in range(10):
+                for i in range(models_num):
                     model_path_i = f"{model_path}/model_{i+1}"
                     model = trainer.load_model(f"{model_path_i}/model.pkl")
+                    # model.to(device)
                     models.append(model)
                 best_model = models[np.argmin(losses)]
             else:
                 
                 best_model = trainer.load_model(f"{model_path}/model.pkl")
+                best_model.to(device)
                 models = [best_model]
             
             history = None
@@ -64,6 +76,7 @@ def main():
             best_history = None
             models = []
             losses = []
+            valid_losses = []
             if config["training_type"] == "clean":
                 models_num = 1
             else:
@@ -72,17 +85,19 @@ def main():
             for i in range(models_num):
                 if not os.path.exists(models_folder):
                     os.makedirs(models_folder)
-                model, history = trainer.compile_and_fit(xy_train=xy_train, xy_valid=xy_valid, fit_args=config["fit_args"])                
+                model, history = trainer.compile_and_fit(xy_train=xy_train, xy_valid=xy_valid, fit_args=config["fit_args"])
                 if best_model is None or history.history['loss'][-1] < best_history.history['loss'][-1]:
                     best_model = model
                     best_history = history
                 models.append(model)
                 losses.append(history.history['loss'][-1])
+                valid_losses.append(history.history['val_loss'][-1])
             if models_num > 1:
                 # execlude the worst model out of the 11 models
                 worst_model = models[np.argmax(losses)]
                 models.remove(worst_model)
                 losses.remove(np.max(losses))
+                valid_losses.remove(np.max(valid_losses))
             # save the other 10 models in a folder called models_all, each with name model_1, model_2, etc.
             models_all_path = f"{models_folder}/{config['model_path']}"
             if not os.path.exists(models_all_path):
@@ -94,53 +109,57 @@ def main():
             # save the losses list in a txt file
             with open(f"{models_folder}/losses.txt", "w") as outfile:
                 outfile.write("\n".join(str(item) for item in losses))
+            with open(f"{models_folder}/valid_losses.txt", "w") as outfile:
+                outfile.write("\n".join(str(item) for item in valid_losses))
                     
             # trainer.model = best_model
             # trainer.save_model(f"{model_path}")     
             
-            if not os.path.exists(plots_folder):
-                os.makedirs(plots_folder)
+        if not os.path.exists(plots_folder):
+            os.makedirs(plots_folder)
             
         evaluate_and_plot(best_model, best_history, xy_test, f"{plots_folder}")
         
         ####### evaluate model robustness
         ########### create new data
         x_len = 1000
-        num_noises = 30
+        num_noises = 100
+        percentage = 0.4
         # if the random seed is 0, then it will be randomly generated, otherwise it will be as specified
         
         test_noise_model = NoiseGenerator(x_len, num_noises, distribution, percentage)
         
         test_dataset_generator = DatasetGenerator(equation_str, test_noise_model, input_features, num_samples=x_len)
         x_clean, y_clean = test_dataset_generator.generate_dataset()
-        print("x_clean shape is", x_clean.shape)
-        print("y_clean shape is", y_clean.shape)
+        # x_clean = torch.from_numpy(x_clean).float() 
+        # y_clean = torch.from_numpy(y_clean).float()
+        
         # create ten different noisy sets
         outer_dists = ["Euclidean", "L1"]
         random_seeds = [1, 25, 50, 75, 100, 125, 150, 175, 200, 225]
-        no_noisy_tests = 5
+        no_noisy_tests = 2
         for idx, model in enumerate(models):
-            
-            # if training_type != "clean":
-            # model_path_i = f"{models_folder}/model_{idx+1}"
-            model_path_i = f"{models_folder}/model_{idx+1}"
-            print("model_path_i is", model_path_i)
-            # else:
-            #     model_path_i = f"{models_folder}/model"
+            if config["load"] == True:
+                model_path_i = f"{model_path}/model_{idx+1}"
+            else:
+                model_path_i = f"{models_folder}/model_{idx+1}"
             if not os.path.exists(model_path_i):
                 os.makedirs(model_path_i)    
+            
             model_i_res_folder = f"{models_folder}/rm_results/model_{idx}"
+            
             if not os.path.exists(model_i_res_folder):
                 os.makedirs(model_i_res_folder)
+            
             if training_type == "noise-aware":
-                weights = estimate_weights(f"{model_path_i}/model.pkl", input_features, training_type="noise-aware", num_samples=x_len)
+                weights = estimate_weights(f"{model_path_i}/model.pkl", input_features, test_dataset_generator, training_type="noise-aware", num_samples=x_len)
                 # weights = [1/(len(input_features) * 2)] * (len(input_features) * 2)
                 target_feats_ids = [0,1]
                 # rm_worst_output = metric.incremental_output_metric(x_clean, y_clean, test_dataset_generator, best_model, outer_dist=outer_dists, 
                 #                                                    weights=weights, training_type="noise-aware", path=f"{model_path}/rm_results",
                 #                                                    target_feat_ids=target_feats_ids)
             else:
-                weights = estimate_weights(f"{model_path_i}/model.pkl", input_features, num_samples=x_len)
+                weights = estimate_weights(f"{model_path_i}/model.pkl", input_features,test_dataset_generator, num_samples=x_len)
                 # rm_worst_output = metric.incremental_output_metric(x_clean, y_clean, test_dataset_generator, best_model, outer_dist=outer_dists, weights=weights, path=f"{model_path}/rm_results")
                 target_feats_ids = [el for el in range(len(input_features))]
             rm_worst_output = None
@@ -149,12 +168,10 @@ def main():
             y_noisy_all = {k: None for k in range(no_noisy_tests)}
 
             rms = {rm_i: None for rm_i in range(no_noisy_tests)}
-            for i in range(no_noisy_tests):
-                x_noisy, y_noisy = test_dataset_generator.modulate_clean(x_clean, y_clean, target_feat_idx=[0], random_seed=random_seeds[i])
-                x_noisy_all[i] = x_noisy
-                y_noisy_all[i] = y_noisy
-            # print("x_noisy_all is", x_noisy_all)
-            # print("y_noisy_all is", y_noisy_all)
+            for i_noisy in range(no_noisy_tests):
+                x_noisy, y_noisy = test_dataset_generator.modulate_clean(x_clean, y_clean, target_feat_idx=[0,1,2,3], random_seed=random_seeds[i_noisy])
+                x_noisy_all[i_noisy] = x_noisy
+                y_noisy_all[i_noisy] = y_noisy
                 
             for key_rm, value in x_noisy_all.items():
                 x_noisy = value
@@ -174,8 +191,10 @@ def main():
                     x_noisy_new = x_noisy
 
                 for idx_shape, x_noise_vector in enumerate(x_noisy_new):
+                    # x_noise_vector = torch.from_numpy(x_noise_vector).float()
                     y_noise_vector = model.predict(x_noise_vector)
 
+                    # y_noisy_new[idx_shape, :] = y_noise_vector.flatten().cpu().numpy()
                     y_noisy_new[idx_shape, :] = y_noise_vector.flatten()
                     
                 rm = metric.calculate_metric(x_clean, y_clean, x_hat=x_noisy_new, y_hat=y_noisy_new, outer_dist=outer_dists, weights=weights, 

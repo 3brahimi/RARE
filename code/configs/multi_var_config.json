@@ -1,20 +1,34 @@
 {
-    "equation": "x1 ** 2 - 1.7 * x2",
+    "equation": "sqrt((x1 - x2)**2 + (y1 - y2)**2)",
 
     "models": [
+        {
+            "type": "linear",
+            "training": ["clean"],
+            "validation": ["clean"],
+            "testing": ["clean"],
+            "model_path": "clean",
+            "load": false,
+            "training_type": "clean",
+            "fit_args": {
+                "epochs": 200,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [0, 1,2,3]
+        },
         {
             "type": "linear",
             "training": ["clean", "gx"],
             "validation": ["clean"],
             "testing": ["clean"],
-            "model_path": "noise_aware_training/models_all",
+            "model_path": "noise-aware",
             "load": false,
             "training_type": "noise-aware",
             "fit_args": {
-                "epochs": 2,
+                "epochs": 200,
                 "early_stopping": 20
             },
-            "noisy_input_feats": [0, 1]
+            "noisy_input_feats": [0, 1,2,3]
         }
         ],
         "features":{
@@ -24,7 +38,15 @@
             },
             "x2": {
                 "type": "float",
+                "range": [0, 6]
+            },
+            "y1": {
+                "type": "float",
                 "range": [-3, 3]
+            },
+            "y2": {
+                "type": "float",
+                "range": [0, 6]
             }
         }
     }

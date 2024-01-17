@@ -96,7 +96,6 @@ class RobustnessMetric:
             fig_name (str, optional): Figure name. Defaults to "RM".
             path (str, optional): Figure save path. Defaults to "./".
         """
-        print("x shape is", t.shape, "x_min shape is", x_min.shape, "x_max shape is", x_max.shape)
         plt.figure(figsize=(8,8))
         for idx, point in enumerate(t):
           plt.vlines(point, ymin=x_min[idx], ymax = x_max[idx])
@@ -228,13 +227,13 @@ class RobustnessMetric:
     
     # return the ratio of the input to the output of the "d"
     def metric_ratio(self, true_input, g_input, g_output, true_output, dist, weights, **kwargs):
-        print("Calculating the ratio between the input and the output")
+        # print("Calculating the ratio between the input and the output")
         # read type from kwargs
         type = kwargs.get("type")
 
         results = {}
         for d in dist:
-            print("Calculating the ratio for distance:", d)
+            # print("Calculating the ratio for distance:", d)
             for i in range(len(g_input)):
                 x = true_input[:, i] if len(true_input.shape) > 1 else true_input
                 temp = self.calculate_dist(x, g_input[i], d, type=type)
@@ -249,6 +248,7 @@ class RobustnessMetric:
         return results
         
     def bounds_distance(self, x, bounds, dist):
+        
         distsmax = self.calculate_dist(x, bounds[0], dist)
         distsmin = self.calculate_dist(x, bounds[1], dist)
         return [distsmax, distsmin]
@@ -372,7 +372,6 @@ class RobustnessMetric:
         """
         if x_hat is not None:
             x_bounds = self.extract_bounds(x_hat)
-            
         x_dists = self.bounds_distance(x, (x_bounds[0], x_bounds[1]), dist)
 
         x_dists_agg = self.aggregate_Q(x_dists, Q)
@@ -380,6 +379,16 @@ class RobustnessMetric:
         gx = self.construct_G(x_dists_agg, x_dists[0], x_dists[1], x_bounds[0], x_bounds[1], Q)
         
         return gx["G"]
+    
+    def gx_distances(self, x, x_hat=None, x_bounds=None, dist="L2", Q="max"):
+        """
+        return the gx distances from the clean signal x
+        """
+        if x_hat is not None:
+            x_bounds = self.extract_bounds(x_hat)
+        x_dists = self.bounds_distance(x, (x_bounds[0], x_bounds[1]), dist)
+        x_dists_agg = self.aggregate_Q(x_dists, Q)
+        return x_dists_agg
     
     def add_dist(self, dist, func):
         self.dists_functions[dist] = func
@@ -424,9 +433,7 @@ class RobustnessMetric:
         """
         This function generates adversarial data from the clean data and the Gs of the input and output, by appending gx as a new feature to the clean_x data
         """
-        print("Generating adversarial data", "clean_x shape is", clean_x.shape, "gx shape is", gx.shape)
         adversarial_x = np.column_stack((clean_x, gx))
-        print("adversarial_x shape is", adversarial_x.shape)
         adversarial_y = gy
         return adversarial_x, adversarial_y
     

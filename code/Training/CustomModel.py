@@ -20,31 +20,37 @@ class CustomModel(BaseModel):
     
     def model_architecture(self):
         model = tf.keras.models.Sequential([
-            tf.keras.layers.Dense(16, input_shape=[self.shape_input], activation='relu'),
-            tf.keras.layers.Dense(32, activation='relu'),
+            tf.keras.layers.Dense(32, input_shape=[self.shape_input], activation='relu'),
+            tf.keras.layers.Dense(64, activation='relu'),
             tf.keras.layers.Dense(self.shape_output)
         ])
         return model
 
     def call(self, inputs, training=False):
         return self.model(inputs, training=training)
+    def predict(self, inputs):
+        return self.model.predict(inputs)
     
-    def compile_and_fit(self, xy_train, xy_valid, bl_training_ratio, bl_validation_ratio, xy_noisy, xy_clean, gx_gy, indices, fit_args):
+    def compile_and_fit(self, xy_train, xy_valid, bl_training_ratio, bl_validation_ratio, xy_noisy, xy_clean, gx_gy, indices, fit_args, weights):
         ####### get and split the data
         fit_args_copy = fit_args.copy()
         bl_training_ratio = tf.constant(bl_training_ratio)
         bl_training_ratio = tf.cast(bl_training_ratio, tf.float32)
         bl_validation_ratio = tf.constant(bl_validation_ratio)
         bl_validation_ratio = tf.cast(bl_validation_ratio, tf.float32)
+        # bl_validation_ratio = tf.constant(0.22)
+        # bl_validation_ratio = tf.cast(bl_validation_ratio, tf.float32)
+        # bl_training_ratio = tf.constant(0.22)
+        # bl_training_ratio = tf.cast(bl_training_ratio, tf.float32)
         penalty = 0
         x_noisy, y_noisy = xy_noisy
         x_clean, y_clean = xy_clean
+        print("x_noisy shape: ", x_noisy.shape, "y_noisy shape: ", y_noisy.shape, "x_clean shape: ", x_clean.shape, "y_clean shape: ", y_clean.shape)
         gx, gy = gx_gy
         
         indices_train, indices_valid = indices
         x_noisy_train = x_noisy[:, indices_train, :]
         x_noisy_valid = x_noisy[:, indices_valid, :]
-        print("x_noisy_train", x_noisy_train.shape, "x_noisy_valid", x_noisy_valid.shape)
         x_noisy_train_max_bounds = np.zeros((x_noisy_train.shape[1], x_noisy_train.shape[-1]))
         x_noisy_train_min_bounds = np.zeros((x_noisy_train.shape[1], x_noisy_train.shape[-1]))
         x_noisy_valid_max_bounds = np.zeros((x_noisy_valid.shape[1], x_noisy_valid.shape[-1]))
@@ -64,7 +70,7 @@ class CustomModel(BaseModel):
         best_valid_loss = np.inf
         no_improvement = 0
         # TODO: read patience from fit_args
-        patience = 10
+        patience = 30
         
         history = {'loss': []}
         training_constant = tf.constant(bl_training_ratio)
@@ -81,41 +87,46 @@ class CustomModel(BaseModel):
             for batch in xy_train:
                 inputs, targets = batch
                 with tf.GradientTape() as tape:
-                    predictions = self(inputs)
-                    loss = self.loss_function(targets, predictions) + penalty
+                    predictions = self.call(inputs)
+                    x_noisy_reshaped = x_noisy.reshape(-1, x_noisy.shape[-1])
+
+                    
+                    y_noisy = self.call(x_noisy_reshaped)
+                    # loss = self.loss_function(targets, predictions) + penalty
+                    loss = self.loss_function(targets, predictions)
+                    
+                    # loss = self.loss_function(targets, predictions)
                 gradients = tape.gradient(loss, self.trainable_variables)
                 self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
                 outer_dists = ["Euclidean"]
-                weights = [1/input_features] * input_features
                 ## TODO: double-check the following line reshape: expected shape=(None, 2), found shape=(2, 8, 2), so we need to reshape the data
-                x_noisy_train = x_noisy_train.reshape(-1, x_noisy_train.shape[-1])
-                y_noisy_train = self(x_noisy_train)
-                training_ratio = self.metric.calculate_metric(x=inputs, y=targets,
-                                                     x_bounds=(x_noisy_train_max_bounds, x_noisy_train_min_bounds), y_hat=y_noisy_train,
-                                                     outer_dist=outer_dists, weights=weights, save=False, vis=False)
+                # x_noisy_train = x_noisy_train.reshape(-1, x_noisy_train.shape[-1])
 
+                # y_noisy_train = self.call(x_noisy_train)
+                # training_ratio = self.metric.calculate_metric(x=inputs, y=targets,
+                #                                      x_bounds=(x_noisy_train_max_bounds, x_noisy_train_min_bounds), y_hat=y_noisy_train,
+                #                                      outer_dist=outer_dists, weights=weights,
+                #                                      save=False, vis=False)
+                training_ratio = self.metric.calculate_metric(x=x_clean, y=y_clean,
+                                                     x_hat=x_noisy, y_hat=y_noisy,
+                                                     outer_dist=outer_dists, weights=weights,
+                                                     save=False, vis=False)
+                training_input = tf.constant(training_ratio[outer_dists[0]]["Input distance"])
+                training_output = tf.constant(training_ratio[outer_dists[0]]["Output distance"])
                 training_ratio = tf.constant(training_ratio[outer_dists[0]]["Ratio"]) 
                 training_ratio = tf.cast(training_ratio, tf.float32)
-                penalty = tf.maximum(0., training_constant - training_ratio)                
+                diff = tf.math.subtract(training_constant, training_ratio)
+                penalty = tf.maximum(tf.constant(0.), diff)
+                
                 # Update the metrics
+                # training_ratio = tf.constant(0)
                 self.train_loss.update_state(targets, predictions)                        
             # Validation loop
             for valid_batch in xy_valid:
                 valid_inputs, valid_targets = valid_batch
                 valid_predictions = self(valid_inputs)
+                valid_loss = self.loss_function(valid_targets, valid_predictions)
 
-                x_noisy_valid = x_noisy_valid.reshape(-1, x_noisy_valid.shape[-1])
-
-                valid_y_noisy = self(x_noisy_valid)
-                valid_ratio = self.metric.calculate_metric(x=x_clean_valid, y=y_clean_valid,
-                                                           x_bounds=(x_noisy_valid_max_bounds, x_noisy_valid_min_bounds), y_hat=valid_y_noisy.numpy(),
-                                                           outer_dist=outer_dists, weights=weights, save=False, vis=False)
-                print("valid ratio", valid_ratio)
-                valid_ratio = tf.constant(valid_ratio[outer_dists[0]]["Ratio"])
-                valid_ratio = tf.cast(valid_ratio, tf.float32)
-                valid_penalty = tf.maximum(0., valid_constant - valid_ratio)
-                
-                valid_loss = self.loss_function(valid_targets, valid_predictions) + valid_penalty
                 if valid_loss < best_valid_loss:
                     best_valid_loss = valid_loss
                     no_improvement = 0
@@ -123,14 +134,16 @@ class CustomModel(BaseModel):
                     no_improvement += 1
                 self.valid_loss.update_state(valid_targets, valid_predictions)
             # Display the metrics at the end of each epoch
-            template = 'Epoch {}, Loss: {}, Valid Loss: {}, Training Ratio: {}, Valid Ratio: {}'
+            template = 'Epoch {}, Loss: {}, Valid Loss: {}, Training Ratio: {}, training_penalty: {}, training_input: {}, training_output: {}, training_constant: {}'
             print(template.format(epoch+1,
                                   self.train_loss.result(),
                                   self.valid_loss.result(),
                                     training_ratio,
-                                    valid_ratio))
+                                    penalty,
+                                    training_input, training_output, training_constant))
             # Store the metrics in the history
             history['loss'].append(self.train_loss.result().numpy())
+            history['val_loss'].append(self.valid_loss.result().numpy())
             # Reset the metrics for the next epoch
             self.train_loss.reset_states()
             self.valid_loss.reset_states()
@@ -139,6 +152,11 @@ class CustomModel(BaseModel):
             if no_improvement >= patience:
                 print(f'Early stopping after {epoch} epochs')
                 break
+            # save the last number of epochs in the history
+            history['val_loss'].append(self.valid_loss.result().numpy())
+            history['train_ratio'] = training_ratio
+            # history['valid_ratio'] = valid_ratio
+            history["epoch"] = epoch
         return self, history
     def save_model(self, path):
         tf.keras.models.save_model(self, path)
@@ -150,7 +168,7 @@ class CustomModel(BaseModel):
         # Calculate the loss on the test set
         test_loss = self.loss_function(y_test, y_pred)
         print(f'Test loss: {test_loss}')
-
+        
         # Plot the predicted results against the actual results
         plt.figure(figsize=(10, 6))
         plt.plot(y_test, label='Actual')

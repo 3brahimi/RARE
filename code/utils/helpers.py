@@ -134,10 +134,16 @@ def noise_aware_data(config, x_clean, y_clean, gx, gx_y):
 
     
     # creat gx_training, which is gx with the same length as x_train, and zeros for another training size
-    gx_train = np.concatenate((gx[indices_train], np.zeros((x_train.shape[0], gx.shape[1]))), axis=0)
+    # gx_train = np.concatenate((gx[indices_train], np.zeros((x_train.shape[0], gx.shape[1]))), axis=0)
+    # copy x instead of zeros
+    gx_train = np.concatenate((gx[indices_train], x_clean[indices_train]), axis=0)
     x_train_new = np.concatenate((x_train, x_train), axis=0)
     x_train = np.concatenate((x_train_new, gx_train), axis=1)
-
+    # ### gx without zeros in training:
+    # gx_train = gx[indices_train]
+    # x_train = np.concatenate((x_train, gx_train), axis=1)
+    
+    
     # repeat y_train as well
     y_train = np.concatenate((y_train, y_train), axis=0)
 
@@ -159,7 +165,7 @@ def get_adversarial_data(config, x_clean, y_clean, gx, gx_y):
     """
     indices = np.arange(x_clean.shape[0])
     indices_train, indices_test, x_train, x_test, y_train, y_test = train_test_split(indices, x_clean, y_clean, test_size=0.2, random_state=42)
-    x_valid, x_test, y_valid, y_test = train_test_split(gx, gx_y, test_size=0.5, random_state=42)
+    x_valid, x_test, y_valid, y_test = train_test_split(gx, gx_y, test_size=0.2, random_state=42)
     return x_train, y_train, x_valid, y_valid, x_test, y_test, indices_train, indices
 
 def evaluate(model, x):

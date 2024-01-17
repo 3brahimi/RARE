@@ -4,7 +4,7 @@ import numpy as np
 import keras
 
 
-def estimate_weights(model_path, inputs, training_type="clean", num_samples=100, model_type="Linear"):
+def estimate_weights(model_path, inputs, dataset_generator, training_type="clean", num_samples=100, model_type="Linear"):
     """
     Estimate the weights of the input features.
 
@@ -16,14 +16,14 @@ def estimate_weights(model_path, inputs, training_type="clean", num_samples=100,
     """
     
     if training_type == "noise-aware":
-        # for adversarial training, we need to add the adversarial noise as a feature for each input in inputs
+        # for noise-aware training, we need to add the noise-aware noise as a feature for each input in inputs with value 0
         new_inputs = inputs.copy()
         for key in inputs.keys():
             new_key = "g" + key
             new_inputs[new_key] = inputs[key]
             
     else:
-        new_inputs = inputs.copy()
+            new_inputs = inputs.copy()
         
     input_feats = list(new_inputs.items())
      
@@ -34,21 +34,31 @@ def estimate_weights(model_path, inputs, training_type="clean", num_samples=100,
     }
     param_values = saltelli.sample(problem, num_samples, calc_second_order=False)
     
+
+    if training_type == "noise-aware":
+        param_values[:, -len(inputs):] = 0
+
     if model_type == "CustomModel":
         from Training.CustomModel import CustomModel
-        model = CustomModel(input_shape=2, loss_function="mean_squared_error", output_shape=1)
+        model = CustomModel(input_shape=len(inputs), loss_function="mean_squared_error", output_shape=1)
         # model = CustomModel.load_model(model_path, input_shape=(len(new_inputs), 2), loss_function="mean_squared_error", output_shape=1)
         model = keras.models.load_model(model_path)
+    elif model_type == "expression":
+        model = dataset_generator
     else:
         model = keras.models.load_model(model_path)
 
     param_values = np.reshape(param_values, (param_values.shape[0], len(new_inputs)))
     
-    
-    Y = model.predict(param_values).flatten()
+    if model_type == "expression":
+        Y = model.apply_equation(param_values).flatten()
+    else:
+        Y = model.predict(param_values).flatten()
     # # Run model
     Si = sobol.analyze(problem, Y,calc_second_order=False)
-    return Si["S1"]
+    weights = Si["ST"]
+    
+    return weights
 
 
 

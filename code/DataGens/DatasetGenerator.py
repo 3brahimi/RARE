@@ -2,8 +2,10 @@ import random
 from matplotlib import pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
+from utils.dists import L2_distance
 from utils.helpers import get_data, get_data_from_dict, noise_aware_data, get_adversarial_data
 import sympy as sp
+import torch
 class DatasetGenerator:
     """
     A class for generating datasets with clean and noisy data.
@@ -45,6 +47,7 @@ class DatasetGenerator:
         - x_clean: The clean input data.
         - y_clean: The clean output data.
         """
+        print("equation is", self.equation, self.num_inputs)
         x_clean = np.zeros((self.num_inputs, self.num_samples))
         # Generate clean input data
         input_feats = list(self.input_feats.items())
@@ -93,6 +96,7 @@ class DatasetGenerator:
 
         # initialize x_noisy with the clean input data
         x_noisy = np.zeros((self.num_noises, self.num_samples, self.num_inputs))
+
         if self.num_inputs == 1:
             noises = self.noise_generator.generate_noise(random_seed=random_seed)
             x_noisy = np.array([x + noise for noise in noises])
@@ -179,8 +183,16 @@ class DatasetGenerator:
             gx = np.zeros((self.num_samples, self.num_inputs))
             for i in range(self.num_inputs):
                 gx_temp = self.extract_g(x_noisy[:, :, i], x_clean[:, i])
-                gx_temp = metric_instance.extract_g(x_noisy[:, :, i], x_clean[:, i]) if metric_instance else gx_temp
+                gx_temp = metric_instance.extract_g(x_hat=x_noisy[:, :, i], x = x_clean[:, i]) if metric_instance else gx_temp
+                # get the distance between gx_temp and x_clean[:, i] as a point-wise distance
+                gx_temp_distances = np.array([L2_distance(x_clean[:, i], gx_temp, type="pointwise")]).flatten()
+                print("gx_temp_distances", len(gx_temp_distances), "gx_temp", len(gx_temp))
+                # gx[:, i] = gx_temp - x_clean[:, i]
                 gx[:, i] = gx_temp
+                # sign = np.sign(gx_temp - x_clean[:, i])
+                
+                # gx[:, i] = gx_temp_distances * sign
+                
         gx_y = y_clean
         x_train, y_train, x_valid, y_valid, x_test, y_test, indices_train, indices_valid = None, None, None, None, None, None, None, None
         if "clean" in training_type:
@@ -195,6 +207,7 @@ class DatasetGenerator:
         
         elif training_type == "adversarial":
             x_train, y_train, x_valid, y_valid, x_test, y_test, indices_train, indices_valid = get_adversarial_data(config, x_clean, y_clean, gx, gx_y)
+        
         
         return (x_train, y_train), (x_valid, y_valid), (x_test, y_test), (x_noisy, y_noisy), (x_clean, y_clean), (gx, gx_y), (indices_train, indices_valid)
 

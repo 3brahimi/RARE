@@ -128,8 +128,8 @@ class LinearModel(BaseModel):
             model (tf.keras.models.Sequential): The created model.
         """
         model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(16, input_shape=[self.shape_input], activation='relu'),
-        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dense(32, input_shape=[self.shape_input], activation='relu'),
+        tf.keras.layers.Dense(64, activation='relu'),
         tf.keras.layers.Dense(self.shape_output)
         ])
         return model
