@@ -4,6 +4,12 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
+from utils.training_utils import CustomLoss
+import keras
+
+def load_my_model():
+    model = keras.models.load_model('model_path', compile=False)
+    return model
 
 class BaseModel(tf.keras.Model):
     """
@@ -56,16 +62,29 @@ class BaseModel(tf.keras.Model):
         x_valid = xy_valid[0]
         y_valid = xy_valid[1]
         fit_args_copy = fit_args.copy()
-        # if self.loss_function == "custom_loss":
-        #     custom_training()
-        # else:
+        print("loss_function", self.loss_function)
+        if self.loss_function == "custom_loss":
+
+            metric = fit_args_copy["metric"]
+            x_noisy = fit_args_copy["x_noisy"]
+            len_input_features = fit_args_copy["len_input_features"]
+            bl_ratio = fit_args_copy["bl_ratio"]
+            gx_dist = fit_args_copy["nominator"]
+            y_clean = fit_args_copy["y_clean"]
+            del fit_args_copy["metric"]
+            del fit_args_copy["x_noisy"]
+            del fit_args_copy["len_input_features"]
+            del fit_args_copy["bl_ratio"]
+            del fit_args_copy["nominator"]
+            del fit_args_copy["y_clean"]
+            self.model.compile(optimizer='adam', loss=CustomLoss(model=self.model, metric=metric, y_clean=y_clean, x_noisy=x_noisy, len_input_features=len_input_features, bl_ratio=bl_ratio, nominator=gx_dist))
+        else:
         # Compile the model
-        self.model.compile(optimizer='adam', loss=self.loss_function)
+            self.model.compile(optimizer='adam', loss=self.loss_function)
 
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=fit_args_copy["early_stopping"])
         fit_args['callbacks'] = [early_stopping]
         del fit_args_copy['early_stopping']
-
         fit_args_new = {}
         for key, value in fit_args_copy.items():
             if key == 'early_stopping':
@@ -129,6 +148,7 @@ class LinearModel(BaseModel):
         """
         model = tf.keras.models.Sequential([
         tf.keras.layers.Dense(32, input_shape=[self.shape_input], activation='relu'),
+        # tf.keras.layers.Dense(32, activation='relu', input_shape=(self.shape_input,)),
         tf.keras.layers.Dense(64, activation='relu'),
         tf.keras.layers.Dense(self.shape_output)
         ])
