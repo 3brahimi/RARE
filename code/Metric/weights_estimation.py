@@ -2,9 +2,14 @@ from SALib.sample import saltelli
 from SALib.analyze import sobol
 import numpy as np
 import keras
+from utils.training_utils import CustomLoss
 
+def get_custom_loss(model, metric, y_clean, x_noisy, len_input_features, bl_ratio, nominator):
+    def custom_loss(y_true, y_pred):
+        return CustomLoss(model, metric, y_clean, x_noisy, len_input_features, bl_ratio, nominator)(y_true, y_pred)
+    return custom_loss
 
-def estimate_weights(model_path, inputs, dataset_generator, training_type="clean", num_samples=100, model_type="Linear"):
+def estimate_weights(model_path, inputs, dataset_generator, training_type="clean", num_samples=100, model_type="Linear", loss_function="mean_squared_error", **kwargs):
     """
     Estimate the weights of the input features.
 
@@ -43,10 +48,24 @@ def estimate_weights(model_path, inputs, dataset_generator, training_type="clean
         model = CustomModel(input_shape=len(inputs), loss_function="mean_squared_error", output_shape=1)
         # model = CustomModel.load_model(model_path, input_shape=(len(new_inputs), 2), loss_function="mean_squared_error", output_shape=1)
         model = keras.models.load_model(model_path)
+    
     elif model_type == "expression":
         model = dataset_generator
     else:
-        model = keras.models.load_model(model_path)
+        if loss_function == "custom_loss":
+            # read the custom loss parameters from kwargs
+            metric = kwargs["metric"]
+            x_noisy = kwargs["x_noisy"]
+            len_input_features = kwargs["len_input_features"]
+            bl_ratio = kwargs["bl_ratio"]
+            nominator = kwargs["nominator"]
+            y_clean = kwargs["y_clean"]
+            model = keras.models.load_model(model_path, compile=False)
+            
+            customloss = CustomLoss(model=model, metric=metric, y_clean=y_clean, x_noisy=x_noisy, len_input_features=len_input_features, bl_ratio=bl_ratio, nominator=nominator)
+            model.compile(optimizer='adam', loss=customloss)
+        else:
+            model = keras.models.load_model(model_path)
 
     param_values = np.reshape(param_values, (param_values.shape[0], len(new_inputs)))
     
