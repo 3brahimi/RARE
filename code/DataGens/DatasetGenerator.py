@@ -1,5 +1,6 @@
 import random
 from matplotlib import pyplot as plt
+from SALib.sample import saltelli
 import numpy as np
 from sklearn.model_selection import train_test_split
 from utils.dists import L2_distance
@@ -47,7 +48,8 @@ class DatasetGenerator:
         - x_clean: The clean input data.
         - y_clean: The clean output data.
         """
-        print("equation is", self.equation, self.num_inputs)
+        random.seed(seed)
+        np.random.seed(seed)
         x_clean = np.zeros((self.num_inputs, self.num_samples))
         # Generate clean input data
         input_feats = list(self.input_feats.items())
@@ -60,6 +62,20 @@ class DatasetGenerator:
             # x = np.random.choice(np.arange(val["range"][0], val["range"][1]), size=self.num_samples, replace=False)
             x = np.sort(x)
             x_clean = x if i == 0 else np.vstack((x_clean, x))
+        
+        # uncomment this to use SALib to generate the input data
+        # problem = {
+        #     'num_vars': len(self.input_feats),
+        #     'names': [f"x{i}" for i in range(len(self.input_feats))],
+        #     'bounds': [[val["range"][0], val["range"][1]] for key, val in input_feats]
+        # }
+        
+        # x_clean = saltelli.sample(problem, self.num_samples, calc_second_order=False).T
+        
+        # self.num_samples = x_clean.shape[1]
+        # print("x_clean", x_clean.shape, "num_samples", self.num_samples)
+        # self.noise_generator.num_samples = self.num_samples
+        
 
         # Generate clean output data according to the specified equation
         if self.num_inputs == 1:
@@ -71,8 +87,8 @@ class DatasetGenerator:
             
         if x_clean.shape[0] != y_clean.shape[0]:
             x_clean = x_clean.T
-            
         return x_clean, y_clean
+
     def apply_equation(self, x):
         if self.num_inputs == 1:
             x = x.T
@@ -99,6 +115,7 @@ class DatasetGenerator:
 
         if self.num_inputs == 1:
             noises = self.noise_generator.generate_noise(random_seed=random_seed)
+
             x_noisy = np.array([x + noise for noise in noises])
         else:    
             for i in range(self.num_inputs):

@@ -134,9 +134,9 @@ def noise_aware_data(config, x_clean, y_clean, gx, gx_y):
 
     
     # creat gx_training, which is gx with the same length as x_train, and zeros for another training size
-    # gx_train = np.concatenate((gx[indices_train], np.zeros((x_train.shape[0], gx.shape[1]))), axis=0)
+    gx_train = np.concatenate((gx[indices_train], np.zeros((x_train.shape[0], gx.shape[1]))), axis=0)
     # copy x instead of zeros
-    gx_train = np.concatenate((gx[indices_train], x_clean[indices_train]), axis=0)
+    # gx_train = np.concatenate((gx[indices_train], x_clean[indices_train]), axis=0)
     x_train_new = np.concatenate((x_train, x_train), axis=0)
     x_train = np.concatenate((x_train_new, gx_train), axis=1)
     # ### gx without zeros in training:

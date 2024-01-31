@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from utils.training_utils import CustomLoss
+from utils.training_utils import CustomLoss, CustomMetric
 import keras
 
 def load_my_model():
@@ -63,6 +63,7 @@ class BaseModel(tf.keras.Model):
         y_valid = xy_valid[1]
         fit_args_copy = fit_args.copy()
         print("loss_function", self.loss_function)
+        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=fit_args_copy["early_stopping"])
         if self.loss_function == "custom_loss":
 
             metric = fit_args_copy["metric"]
@@ -71,18 +72,31 @@ class BaseModel(tf.keras.Model):
             bl_ratio = fit_args_copy["bl_ratio"]
             gx_dist = fit_args_copy["nominator"]
             y_clean = fit_args_copy["y_clean"]
+            
             del fit_args_copy["metric"]
             del fit_args_copy["x_noisy"]
             del fit_args_copy["len_input_features"]
             del fit_args_copy["bl_ratio"]
             del fit_args_copy["nominator"]
             del fit_args_copy["y_clean"]
-            self.model.compile(optimizer='adam', loss=CustomLoss(model=self.model, metric=metric, y_clean=y_clean, x_noisy=x_noisy, len_input_features=len_input_features, bl_ratio=bl_ratio, nominator=gx_dist))
+            
+            optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+            
+            self.model.compile(optimizer=optimizer, 
+                            #    metrics=["mse", "accuracy"],
+                               metrics=["mse", "accuracy", CustomMetric(model=self.model, y_clean=y_clean, x_noisy=x_noisy,
+                                                                        len_input_features=len_input_features, 
+                                                                         nominator=gx_dist, name="custom_metric")],
+                               loss=CustomLoss(model=self.model, metric=metric, 
+                                               y_clean=y_clean, x_noisy=x_noisy,
+                                               len_input_features=len_input_features, 
+                                               bl_ratio=bl_ratio, nominator=gx_dist))
+            early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_mse', patience=fit_args_copy["early_stopping"])
+
         else:
         # Compile the model
             self.model.compile(optimizer='adam', loss=self.loss_function)
-
-        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=fit_args_copy["early_stopping"])
+            
         fit_args['callbacks'] = [early_stopping]
         del fit_args_copy['early_stopping']
         fit_args_new = {}
@@ -90,7 +104,9 @@ class BaseModel(tf.keras.Model):
             if key == 'early_stopping':
                 continue
             fit_args_new[key] = value
-        history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid), **fit_args_new)
+        
+
+        history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=2,**fit_args_new)
 
         return self.model, history
     
@@ -166,6 +182,7 @@ class LinearModel(BaseModel):
             LinearModel: An instance of the LinearModel class with the loaded model.
         """
         model = tf.keras.models.load_model(filepath)
+        # model = self.model.load_model(filepath)
         return model
     
     def save_model(self, path):
