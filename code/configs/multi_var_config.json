@@ -7,26 +7,12 @@
             "training": ["clean"],
             "validation": ["clean"],
             "testing": ["clean"],
-            "model_path": "clean",
-            "load": false,
-            "training_type": "clean",
-            "fit_args": {
-                "epochs": 200,
-                "early_stopping": 20
-            },
-            "noisy_input_feats": [0, 1,2,3]
-        },
-        {
-            "type": "linear",
-            "training": ["clean", "gx"],
-            "validation": ["clean"],
-            "testing": ["clean"],
             "model_path": "noise-aware",
             "load": false,
             "training_type": "noise-aware",
             "fit_args": {
                 "epochs": 200,
-                "early_stopping": 20
+                "early_stopping": 30
             },
             "noisy_input_feats": [0, 1,2,3]
         }

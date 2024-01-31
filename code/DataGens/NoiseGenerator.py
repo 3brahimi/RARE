@@ -9,7 +9,7 @@ class NoiseGenerator:
 
     def generate_noise(self, random_seed=0):
         noises = []
-        random_seed = np.random.randint(0, 1000) if random_seed == 0 else random_seed
+        # random_seed = np.random.randint(0, 1000) if random_seed == 0 else random_seed
         np.random.seed(random_seed)
         for _ in range(self.num_noises):
             if self.noise_type == 'normal':

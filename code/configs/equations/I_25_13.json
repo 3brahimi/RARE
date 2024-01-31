@@ -1,0 +1,53 @@
+{
+    "equation": "q/C",
+    "models": [
+        {
+            "type": "linear",
+            "model_path": "clean",
+            "load": false,
+            "training_type": "clean",
+            "fit_args": {
+                "epochs": 200,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2,
+                3
+            ]
+        },
+        {
+            "type": "linear",
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 200,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2,
+                3
+            ]
+        }
+    ],
+    "features": {
+        "q": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "C": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        }
+    }
+}

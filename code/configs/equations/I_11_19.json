@@ -1,0 +1,81 @@
+{
+    "equation": "x1*y1+x2*y2+x3*y3",
+    "models": [
+        {
+            "type": "linear",
+            "model_path": "clean",
+            "load": false,
+            "training_type": "clean",
+            "fit_args": {
+                "epochs": 200,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2,
+                3
+            ]
+        },
+        {
+            "type": "linear",
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 200,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2,
+                3
+            ]
+        }
+    ],
+    "features": {
+        "x1": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "x2": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "x3": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "y1": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "y2": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "y3": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        }
+    }
+}
