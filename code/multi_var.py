@@ -616,21 +616,12 @@ def main(res_folder, json_path, loss_fuction, noise_type, epsilon=0.5):
 
 if __name__ == '__main__':
     json_files = [f for f in os.listdir('./configs/equations/') if f.endswith('.json')]
-    # json_files = ["I_11_19.json", "I_26_2.json", "I_27_6.json", "I_29_16.json", "I_30_5.json"]
-    # json_files = ["I_32_5.json","I_32_17.json","I_34_8.json","I_34_1.json","I_34_27.json"]
-    # json_files = ["II_8_7.json"]
-    json_files = [
-                # "I_14_3.json", 
-                # "I_12_1.json",
-                "I_34_27.json",
-                # "I_15_3t.json",
-                # "II_8_31.json",
-                # "II_11_20.json",
-                # "II_27_16.json",
-                # "II_27_18.json"
-                ]
+    # json_files = ["I_11_19.json", "I_26_2.json", "I_29_16.json", "I_30_5.json"]
+    
     json_files = [
         # "I_25_13.json",
+        "I_32_17.json",
+        "I_34_1.json"
         # "I_9_18.json", # not enough space for the meshgrid
         # "I_12_2.json",
         # # "I_34_27.json",
