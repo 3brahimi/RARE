@@ -1,5 +1,5 @@
 {
-    "equation": "x1 + x2",
+    "equation": ["3*x", "x ** 2"],
 
     "models": [
         {
@@ -7,23 +7,20 @@
             "training": ["clean"],
             "validation": ["clean"],
             "testing": ["clean"],
-            "model_path": "E:/crml/code/results_20240103143915/models/linear_training_clean_validation_clean",
+            "model_path": "E:/crml/code/results_multi_outputs/models/linear_training_clean_validation_clean",
             "load": true,
             "fit_args": {
                 "epochs": 100,
                 "early_stopping": 10
             },
-            "noisy_input_feats": [1]
+            "noisy_input_feats": [0]
         }
     ],
     "features":{
-        "x1": {
-            "type": "float",
-            "range": [-3, 3]
-        },
-        "x2": {
+        "x": {
             "type": "float",
             "range": [-3, 3]
         }
+       
     }
 }

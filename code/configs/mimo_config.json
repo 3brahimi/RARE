@@ -1,0 +1,30 @@
+{
+    "equation": ["3*x1", "x1 ** 2 + 2*x2 + 1"],
+
+    "models": [
+        {
+            "type": "linear",
+            "training": ["clean"],
+            "validation": ["clean"],
+            "testing": ["clean"],
+            "model_path": "E:/crml/code/results_mimo/models/linear_training_clean_validation_clean",
+            "load": true,
+            "fit_args": {
+                "epochs": 150,
+                "early_stopping": 10
+            },
+            "noisy_input_feats": [0]
+        }
+    ],
+    "features":{
+        "x1": {
+            "type": "float",
+            "range": [-3, 3]
+        },
+        "x2": {
+            "type": "float",
+            "range": [-3, 3]
+        }
+       
+    }
+}

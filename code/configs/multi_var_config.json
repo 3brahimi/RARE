@@ -1,0 +1,39 @@
+{
+    "equation": "sqrt((x1 - x2)**2 + (y1 - y2)**2)",
+
+    "models": [
+        {
+            "type": "linear",
+            "training": ["clean"],
+            "validation": ["clean"],
+            "testing": ["clean"],
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 200,
+                "early_stopping": 30
+            },
+            "noisy_input_feats": [0, 1,2,3]
+        }
+        ],
+        "features":{
+            "x1": {
+                "type": "float",
+                "range": [-3, 3]
+            },
+            "x2": {
+                "type": "float",
+                "range": [0, 6]
+            },
+            "y1": {
+                "type": "float",
+                "range": [-3, 3]
+            },
+            "y2": {
+                "type": "float",
+                "range": [0, 6]
+            }
+        }
+    }
+    

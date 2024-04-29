@@ -161,3 +161,6 @@ cython_debug/
 
 # results folders
 results_*/
+
+code/configs/equations/
+code/packages.txt

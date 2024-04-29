@@ -7,8 +7,8 @@
             "training": ["clean"],
             "validation": ["clean"],
             "testing": ["clean"],
-            "model_path": "E:/crml/code/results_20240103232127/models/linear_training_clean_validation_clean/model.pkl",
-            "load": true,
+            "model_path": "/linear_training_clean_validation_clean/",
+            "load": false,
             "fit_args": {
                 "epochs": 100,
                 "early_stopping": 10
