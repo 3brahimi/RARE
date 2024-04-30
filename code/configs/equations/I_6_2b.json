@@ -1,0 +1,45 @@
+{
+    "equation": "exp(-((theta-theta1)/sigma)**2/2)/(sqrt(2*pi)*sigma)",
+    "num_samples": 32,
+    "models": [
+        {
+            "type": "linear",
+            "model_path": "clean",
+            "load": false,
+            "training_type": "clean",
+            "fit_args": {
+                "epochs": 1000,
+                "early_stopping": 100
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2
+            ],
+        "extended_data": false
+        }
+    ],
+    "features": {
+        "sigma": {
+            "type": "float",
+            "range": [
+                1.0,
+                3.0
+            ]
+        },
+        "theta": {
+            "type": "float",
+            "range": [
+                1.0,
+                3.0
+            ]
+        },
+        "theta1": {
+            "type": "float",
+            "range": [
+                1.0,
+                3.0
+            ]
+        }
+    }
+}
