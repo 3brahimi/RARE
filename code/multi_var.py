@@ -620,8 +620,8 @@ if __name__ == '__main__':
     
     json_files = [
         # "I_25_13.json",
-        "I_32_17.json",
-        "I_34_1.json"
+        # "I_32_17.json",
+        # "I_34_1.json"
         # "I_9_18.json", # not enough space for the meshgrid
         # "I_12_2.json",
         # # "I_34_27.json",
