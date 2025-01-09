@@ -3,7 +3,7 @@ import json
 import math
 
 # Load the CSV file
-df = pd.read_csv('E:\crml\code\FeynmanEquations.csv')
+df = pd.read_csv('./FeynmanEquations.csv')
 
 # Iterate over the rows of the DataFrame
 for _, row in df.iterrows():
@@ -64,5 +64,5 @@ for _, row in df.iterrows():
     # Save the JSON string to a file
     filename = row['Filename'].replace(' ', '_')
     filename = filename.replace('.', '_')+ '.json'
-    with open(f"./equations_config/{filename}", 'w') as f:
+    with open(f"../configs/equations_config/{filename}", 'w') as f:
         f.write(output_json)

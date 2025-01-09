@@ -64,6 +64,8 @@ class RobustnessMetric:
         if Q == "max" or Q =="min":
             distsmax_mask = [1 if distsmax[i] == aggregated_distances[i] else 0 for i in range(len(aggregated_distances))]
             distsmin_mask = [1 if distsmin[i] == aggregated_distances[i] else 0 for i in range(len(aggregated_distances))]
+            # if a value exists in both max and min, then it should be in the max, and 0 in the min
+            distsmin_mask = [0 if distsmax_mask[i] == 1 else distsmin_mask[i] for i in range(len(aggregated_distances))]
             min_bound_aggregatd = np.multiply(min_bound, distsmin_mask)
 
             max_bound_aggregatd = np.multiply(max_bound, distsmax_mask)
@@ -225,21 +227,56 @@ class RobustnessMetric:
             raise ValueError("Invalid type for dist. It should be either a string or a callable function.")
         return dist_fn(x, y, **kwargs)
     
+    # rescale x and y to be between 0 and 1 according to the min and max values of the two vectors
+    def rescale_vector(self, true, noisy):
+        # min_val = min(np.min(x), np.min(y))
+        min_val = np.min(true)
+        max_val = np.max(true)
+        print("min_val", min_val, "max_val", max_val)
+        if min_val == max_val:
+            # retutn an error
+            raise ValueError("The min and max values of the input and the output are the same", true, noisy) 
+        true = (true - min_val) / (max_val - min_val)
+        noisy = (noisy - min_val) / (max_val - min_val)
+        return true, noisy
+      
     # return the ratio of the input to the output of the "d"
     def metric_ratio(self, true_input, g_input, g_output, true_output, dist, weights, **kwargs):
-        # print("Calculating the ratio between the input and the output")
-        # read type from kwargs
         type = kwargs.get("type")
-
         results = {}
         for d in dist:
             # print("Calculating the ratio for distance:", d)
             for i in range(len(g_input)):
                 x = true_input[:, i] if len(true_input.shape) > 1 else true_input
-                temp = self.calculate_dist(x, g_input[i], d, type=type)
+                gx = g_input[i]
+                x, gx = self.rescale_vector(true=x, noisy=gx)
+                # temp = self.calculate_dist(x, g_input[i], d, type=type)
+                temp = self.calculate_dist(x, gx, d, type=type)
                 dx = temp * weights[0] if i == 0 else dx + (temp * weights[i])
-            # dx = self.calculate_dist(true_input, g_input, d, type=type)
-            dy = self.calculate_dist(true_output, g_output, d, type=type)
+                # plt.figure(figsize=(6,6))
+                # x_sort_index = np.argsort(x)
+                
+                # plt.plot(x[x_sort_index], x[x_sort_index], label="x")
+                # plt.plot(x[x_sort_index], gx[x_sort_index], label="G(x)")
+                # plt.xlabel("index", fontsize=18)
+                # plt.ylabel("Y", fontsize=18)
+                # plt.legend(prop={'size': 14}, shadow=True, fontsize=14)
+                # plt.savefig(f"./{d}_input_feature_{i}.png", bbox_inches='tight')
+                # print("length of x", len(x))
+            # dy = self.calculate_dist(true_output, g_output, d, type=type)
+            
+            true_y, gy = self.rescale_vector(true=true_output, noisy=g_output)
+            
+            # plt.figure(figsize=(6,6))
+            # size = len(true_y)
+            # plt.plot(np.linspace(0, size, size), true_y[0:size], label="True output")
+            # plt.plot(np.linspace(0, size, size), gy[0:size], label="G output")
+            # plt.xlabel("index", fontsize=18)
+            # plt.ylabel("$Y$", fontsize=18)
+            # plt.legend(prop={'size': 14}, shadow=True, fontsize=14)
+            # plt.savefig(f"./{d}_output.png", bbox_inches='tight')
+            
+            dy = self.calculate_dist(true_y, gy, d, type=type)
             results[d] = {
             "Input distance": dx,
             "Output distance": dy,    
@@ -296,7 +333,7 @@ class RobustnessMetric:
         gxs = []
         x_bounds_feat = x_bounds
         # x = x.reshape(input_features, x.shape[0])
-        if input_features > 1:
+        if input_features >= 1:
             for i in range(input_features):
                 print("Calculating the RM for feature:", i)
                 if x_hat is not None:
@@ -315,10 +352,17 @@ class RobustnessMetric:
                     raise ValueError("Either x_hat or x_bounds should be provided")
                 if y_hat is not None:
                     y_bounds = self.extract_bounds(y_hat)
-                    
+                
+                # sort_idx = np.argsort(x[:, i])
+                # x_sorted = x[sort_idx]
+                # x_bounds_feat_max = x_bounds_feat[0][sort_idx]
+                # x_bounds_feat_min = x_bounds_feat[1][sort_idx]       
                     # self.plot_distances(x[:, i], x_bounds[0], x_bounds[1], vis=True, save=False, fig_name=f"Distances plot for input for noise {i}")
                 x_dists = self.bounds_distance(x[:, i], (x_bounds_feat[0], x_bounds_feat[1]), inner_dist)
+                # x_dists = self.bounds_distance(x_sorted[:, i], (x_bounds_feat_max, x_bounds_feat_min), inner_dist)
                 x_dists_agg = self.aggregate_Q(x_dists, Q)
+                x_dists_max = x_dists[0]
+                x_dists_min = x_dists[1]
                 if vis or save:
                     self.plot_aggregated_distance(x[:, i], x_dists_agg, distsmax=x_dists[0], distsmin=x_dists[1], max_bound=x_bounds_feat[0], min_bound=x_bounds_feat[1], vis=False, save=True, fig_name=f"Max distances for input for noise {i}", path=f"{path}/max_distances_input_noise_{i}")
                 # y_dists = self.bounds_distance(y, (y_bounds[0], y_bounds[1]), inner_dist)
@@ -326,7 +370,14 @@ class RobustnessMetric:
                 # construct G of input 
                 gx = self.construct_G(x_dists_agg, distsmax=x_dists[0], distsmin=x_dists[1], max_bound=x_bounds_feat[0], min_bound=x_bounds_feat[1], Q=Q)
                 if vis or save:
-                    self.plot_G(x=x[:, i], true_sloution=x[:,i], distances_array=gx["G_distances"], dist_max=x_dists[0], dist_min=x_dists[1], x_max=x_bounds_feat[0], x_min=x_bounds_feat[1], vis=False, save=True, fig_name=f"G for input for noise {i}", path=f"{path}/G_input_noise_{i}")
+                    # sort the values according to the x
+                    sort_idx = np.argsort(x[:, i])
+                    x_sorted = x[sort_idx]
+                    x_dists_max = np.array(x_dists[0])[sort_idx]
+                    x_dists_min = np.array(x_dists[1])[sort_idx]
+                    x_bounds_feat_max = x_bounds_feat[0][sort_idx]
+                    x_bounds_feat_min = x_bounds_feat[1][sort_idx]
+                    self.plot_G(x=x_sorted[:, i], true_sloution=x_sorted[:,i], distances_array=gx["G_distances"], dist_max=x_dists_max, dist_min=x_dists_min, x_max=x_bounds_feat_max, x_min=x_bounds_feat_min, vis=False, save=True, fig_name=f"G for input for noise {i}", path=f"{path}/G_input_noise_{i}")
                 gxs.append(gx["G"])
         else:
             if x_hat is not None and y_hat is not None:
@@ -334,7 +385,13 @@ class RobustnessMetric:
                 y_bounds = self.extract_bounds(y_hat)
             # min_input_bound, max_input_bound = calculations.min_max_bounds(x_hat)
             # x_dists = self.bounds_distance(x, (x_bounds[0], x_bounds[1]), inner_dist)
+            sort_idx = np.argsort(x)
+            x_sorted = x[sort_idx]
+            x_bounds_feat_max = x_bounds_feat[0][sort_idx]
+            x_bounds_feat_min = x_bounds_feat[1][sort_idx]
+            
             x_dists = self.bounds_distance(x, (x_bounds_feat[0], x_bounds_feat[1]), inner_dist)
+            
             x_dists_agg = self.aggregate_Q(x_dists, Q)    
             # construct G of input 
             gx = self.construct_G(x_dists_agg, distsmax=x_dists[0], distsmin=x_dists[1], max_bound=x_bounds_feat[0], min_bound=x_bounds_feat[1], Q=Q)
@@ -342,14 +399,26 @@ class RobustnessMetric:
             gxs.append(gx["G"])
         
         y_dists = self.bounds_distance(y, (y_bounds[0], y_bounds[1]), inner_dist)
+        # y_dists = self.bounds_distance(y_sorted, (y_bounds_max, y_bounds_min), inner_dist)
         y_dists_agg = self.aggregate_Q(y_dists, Q)
-        
+        y_dists_max = y_dists[0]
+        y_dists_min = y_dists[1]
         # construct G of output
-        gy = self.construct_G(y_dists_agg, distsmax=y_dists[0], distsmin=y_dists[1], max_bound=y_bounds[0], min_bound=y_bounds[1], Q=Q)
+
+        gy = self.construct_G(y_dists_agg, distsmax=y_dists_max, distsmin=y_dists_min, max_bound=y_bounds[0], min_bound=y_bounds[1], Q=Q)
+
         if vis or save:
-            self.plot_G(x=np.linspace(0, len(y), len(y)), true_sloution=y, distances_array=gy["G_distances"], dist_max=y_dists[0], dist_min=y_dists[1], x_max=y_bounds[0], x_min=y_bounds[1], vis=False, save=True, fig_name=f"G for output", path=f"{path}/G_output")
+            y_sort_idx = np.argsort(y)
+            y_sorted = y[y_sort_idx]
+            y_bounds_max = y_bounds[0][y_sort_idx]
+            y_bounds_min = y_bounds[1][y_sort_idx]
+
+            # self.plot_G(x=np.linspace(0, len(y), len(y)), true_sloution=y_sorted, distances_array=gy["G_distances"], dist_max=y_dists_max, dist_min=y_dists_min, x_max=y_bounds_max, x_min=y_bounds_min, vis=False, save=True, fig_name=f"G for output", path=f"{path}/G_output")
+            self.plot_G(x=np.linspace(0, len(y), len(y)), true_sloution=y, distances_array=gy["G_distances"], dist_max=y_dists_max, dist_min=y_dists_min, x_max=y_bounds[0], x_min=y_bounds[1], vis=False, save=True, fig_name=f"G for output", path=f"{path}/G_output")
         # robustness = self.metric_ratio(x, gx["G"], y, gy["G"], outer_dist, type="overall")
-        robustness = self.metric_ratio(x, gxs, y, gy["G"], dist=outer_dist, type="overall", weights=weights)
+
+        robustness = self.metric_ratio(true_input=x, g_input=gxs, g_output=gy["G"], true_output=y, dist=outer_dist, type="overall", weights=weights)
+        # robustness = self.metric_ratio(x_sorted, gxs, gy["G"], y_sorted, dist=outer_dist, type="overall", weights=weights)
         if tf.is_tensor(x):
             # return the robustness as a tensor
             return tf.convert_to_tensor(robustness)
@@ -371,12 +440,11 @@ class RobustnessMetric:
         """
         if x_hat is not None:
             x_bounds = self.extract_bounds(x_hat)
+        
         x_dists = self.bounds_distance(x, (x_bounds[0], x_bounds[1]), dist)
         x_dists_agg = self.aggregate_Q(x_dists, Q)
-        
         # construct G of input
         gx = self.construct_G(aggregated_distances=x_dists_agg, distsmax=x_dists[0], distsmin=x_dists[1], max_bound=x_bounds[0], min_bound=x_bounds[1], Q=Q)
-        
         return gx["G"]
     
     def gx_distances(self, x, x_hat=None, x_bounds=None, dist="L2", Q="max"):

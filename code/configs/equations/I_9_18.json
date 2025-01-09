@@ -1,5 +1,6 @@
 {
     "equation": "G*m1*m2/((x2-x1)**2+(y2-y1)**2+(z2-z1)**2)",
+    "num_samples": 10,
     "models": [
         {
             "type": "linear",
@@ -15,24 +16,13 @@
                 1,
                 2,
                 3
-            ]
-        },
-        {
-            "type": "linear",
-            "model_path": "noise-aware",
-            "load": false,
-            "training_type": "noise-aware",
-            "fit_args": {
-                "epochs": 200,
-                "early_stopping": 20
-            },
-            "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3
-            ]
+            ],
+            "extended_data": false,
+            "sampling_rate":10
+
+
         }
+
     ],
     "features": {
         "m1": {

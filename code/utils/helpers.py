@@ -123,9 +123,9 @@ def noise_aware_data(config, x_clean, y_clean, gx, gx_y):
    
     indices = np.arange(x_clean.shape[0])
          
-    indices_train, indices_temp, x_train, x_temp, y_train, y_temp = train_test_split(indices, x_clean, y_clean, test_size=0.2, random_state=42)
+    indices_train, indices_temp, x_train, x_temp, y_train, y_temp = train_test_split(indices, x_clean, y_clean, test_size=0.2, random_state=42, shuffle=True)
    
-    indices_valid, indices_test, x_valid, x_test, y_valid, y_test = train_test_split(indices_temp, x_temp, y_temp, test_size=0.5, random_state=42)
+    indices_valid, indices_test, x_valid, x_test, y_valid, y_test = train_test_split(indices_temp, x_temp, y_temp, test_size=0.5, random_state=42, shuffle=True)
    
     # ####### no shuffle split     
     # x_train, x_temp, y_train, y_temp = train_test_split(x_clean, y_clean, test_size=0.2, random_state=42, shuffle=False)
@@ -133,31 +133,58 @@ def noise_aware_data(config, x_clean, y_clean, gx, gx_y):
     # x_valid, x_test, y_valid, y_test = train_test_split(x_temp, y_temp, test_size=0.5, random_state=42, shuffle=False)
 
     
-    # creat gx_training, which is gx with the same length as x_train, and zeros for another training size
-    gx_train = np.concatenate((gx[indices_train], np.zeros((x_train.shape[0], gx.shape[1]))), axis=0)
+    # # creat gx_training, which is gx with the same length as x_train, and zeros for another training size
+    # gx_train = np.concatenate((gx[indices_train], np.zeros((x_train.shape[0], gx.shape[1]))), axis=0)
+    
     # copy x instead of zeros
-    # gx_train = np.concatenate((gx[indices_train], x_clean[indices_train]), axis=0)
+    gx_train = np.concatenate((gx[indices_train], x_clean[indices_train]), axis=0)
     x_train_new = np.concatenate((x_train, x_train), axis=0)
+    
     x_train = np.concatenate((x_train_new, gx_train), axis=1)
-    # ### gx without zeros in training:
-    # gx_train = gx[indices_train]
-    # x_train = np.concatenate((x_train, gx_train), axis=1)
-    
-    
+   
+    # ## also gx_train - x_train as a new feature
+    # dist_gx_x_train = gx_train - x_train_new
+    # x_train = np.concatenate((x_train_new, gx_train, dist_gx_x_train), axis=1)
+ 
+       
     # repeat y_train as well
     y_train = np.concatenate((y_train, y_train), axis=0)
 
     # for the validation set, add new column feature for gx only with values 0
-    gx_valid = np.zeros((x_valid.shape[0], gx.shape[1]))
+    # gx_valid = np.zeros((x_valid.shape[0], gx.shape[1]))
+    
+    #  valid on clean data not zeros 
+    gx_valid = x_valid
+    # gx_valid = np.zeros((x_valid.shape[0], gx.shape[1]))
+    # dist_gx_x_valid = gx_valid - x_valid
     x_valid = np.concatenate((x_valid, gx_valid), axis=1)
+    # x_valid = np.concatenate((x_valid, gx_valid, dist_gx_x_valid), axis=1)
     
     # append the last values of gx to the test set, from the end back the length of x_test
-    x_test = np.concatenate((x_test, gx[indices_test]), axis=1)
+    dist_gx_x_test = gx[indices_test] - x_test
+    x_test = np.concatenate((x_test, gx[indices_test]), axis=1)    
+    # x_test = np.concatenate((x_test, gx[indices_test], dist_gx_x_test), axis=1)  
     x_test = np.concatenate((x_test, x_test), axis=0)
     
     y_test = np.concatenate((y_test, y_test), axis=0)
 
     return x_train, y_train, x_valid, y_valid, x_test, y_test, indices_train, indices_valid
+
+
+def noisy_data(x_clean, y_clean, x_noisy, y_noisy):
+    x_all = None
+    print("x_noisy shape is", x_noisy.shape, "y_noisy shape is", y_noisy.shape)
+    print("x_clean shape is", x_clean.shape, "y_clean shape is", y_clean.shape)
+    if x_noisy.shape[0] != x_clean.shape[0]:
+        x_all = np.concatenate((x_clean, x_noisy.reshape(-1, x_noisy.shape[2])), axis=0)
+    else:
+        x_all = np.concatenate((x_clean, x_noisy), axis=0)
+            
+    y_all = np.concatenate((y_clean, y_noisy.reshape(-1)), axis=0)
+    indices = np.arange(x_all.shape[0])
+    indices_train, indices_temp,  x_train, x_temp, y_train, y_temp = train_test_split(indices, x_all, y_all, test_size=0.2, random_state=42, shuffle=True)
+    indices_valid, indices_test, x_valid, x_test, y_valid, y_test = train_test_split(indices_temp, x_temp, y_temp, test_size=0.5, random_state=42, shuffle=True)
+    return x_train,y_train,x_valid,y_valid,x_test,y_test,indices_train,indices_valid
 
 def get_adversarial_data(config, x_clean, y_clean, gx, gx_y):
     """
@@ -233,3 +260,4 @@ def evaluate_and_plot(model, history, xy_test, path="./"):
         plt.title('Loss History')
         plt.legend()
         plt.savefig(f"{path}/loss_history.png", bbox_inches='tight', dpi=300)
+        

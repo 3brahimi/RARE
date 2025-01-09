@@ -1,13 +1,21 @@
+import datetime
 import os
-from DataGens import NoiseGenerator, MultivarDatasetGenerator
+import sys
+sys.path.append('..')
+from DataGens import NoiseGenerator, DatasetGenerator
 import numpy as np
-
 from Training import ModelTrainer
 import tensorflow as tf
 import json
-from Metric.RobustnessMetric import RobustnessMetric
-from Metric.weights_estimation import estimate_weights
 
+from Metric.RobustnessMetric import RobustnessMetric
+
+# model architecture function
+def model_architecture():
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Dense(1, input_shape=[1])
+    ])
+    return model
 
 def main():
 
@@ -16,30 +24,29 @@ def main():
     distribution = 'normal'
     percentage = 0.1
     # res_folder = f"results_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
-    res_folder = f"results_mimo"
+    res_folder = f"results_multi_outputs"
     models_folder = f"{res_folder}/models"
     plots_folder = f"{res_folder}/plots"
     
-    with open('./configs/mimo_config.json') as f:
+    with open('./configs/multi_outputs_config.json') as f:
         configs = json.load(f)
     
     noise_model = NoiseGenerator(x_len, num_noises, distribution, percentage)
     
     equations_str = configs["equation"]
-    print("equations_str is", equations_str)
     input_features = configs["features"]
     num_inputs = len(input_features)
 
-    dataset_generator = MultivarDatasetGenerator(equations_str, noise_model, input_features, num_samples=1000)
+    dataset_generator = DatasetGenerator(equations_str[0], noise_model, input_features, num_samples=1000)
     metric = RobustnessMetric()
     
     for config in configs["models"]:
-        xy_train, xy_valid, xy_test= dataset_generator.split(config)
-        x_train = xy_train[0]
+        xy_train, xy_valid, xy_test= dataset_generator.split_multi_outputs(config, equations_str)
+        x_train = xy_train[0].reshape(-1, 1)
         y_train = xy_train[1]
-        x_test = xy_test[0]
+        x_test = xy_test[0].reshape(-1, 1)
         y_test = xy_test[1]
-          # mlp = MLPRegressor(hidden_layer_sizes=(50,), max_iter=1000, random_state=42)
+        # mlp = MLPRegressor(hidden_layer_sizes=(50,), max_iter=1000, random_state=42)
         # mlp.fit(x_train, y_train)
 
         # # Use the trained MLPRegressor to make predictions
@@ -47,7 +54,7 @@ def main():
         # y1_pred = y_pred[:,0]
         # y2_pred = y_pred[:,1]
 
-        trainer = ModelTrainer().get_model(config["type"], shape_input=len(input_features), loss_function='mean_squared_error', output_shape=len(equations_str))
+        trainer = ModelTrainer().get_model(config["type"], shape_input=1, loss_function='mean_squared_error', output_shape=2)
         if config["load"] == True:
             model_path = config["model_path"]
             model = trainer.load_model(f"{model_path}/model.pkl")
@@ -70,53 +77,40 @@ def main():
         
         ####### evaluate model robustness
         ########### create new data 
-        testing_no_samples = 10
-        x_len = 50
-        num_noises = 10
-        test_noise_model = NoiseGenerator(x_len, num_noises, distribution, percentage)
-        testing_dataset_generator = MultivarDatasetGenerator(equations_str, test_noise_model, input_features, num_samples=x_len)
-        
-        x_clean, y_clean = testing_dataset_generator.generate_dataset()
-        print("x_clean is", x_clean.shape)
-        print("y_clean is", y_clean.shape)            
-        x_noisy, y_noisy = testing_dataset_generator.modulate_clean(x_clean, y_clean, target_feat_idx=[1])
-        print("x_noisy is", x_noisy)
-        print("y_noisy is", y_noisy.shape)
-        # plt.plot(y_noisy[0, :, 0], label="y1_noisy")
-        # plt.plot(y_clean[:, 0], label="y1_clean")
-        # plt.legend()
-        # plt.show()        
+        testing_no_samples = 1000
+        testing_dataset_generator = DatasetGenerator(equations_str[0], noise_model, input_features, num_samples=testing_no_samples)
+        y_clean = np.zeros((testing_no_samples, len(equations_str)))
+        for i, equation in enumerate(equations_str):
+            testing_dataset_generator.set_equation(equation)
+            x_clean, y_temp = testing_dataset_generator.generate_dataset()
+            y_temp = y_temp.ravel()
+            y_clean[:, i] = y_temp
+                    
+        x_noisy, y_noisy = testing_dataset_generator.modulate_clean(x_clean, y_clean, target_feat_idx=[0])
+ 
         ########### create y_noisy_new by predicting x_noisy, with the same shape as y_noisy
         y_noisy_new = np.zeros((y_noisy.shape[0], y_noisy.shape[1], y_noisy.shape[2]))
-        for idx, x_noise_vector in enumerate(x_noisy):
+        for x_noise_vector in x_noisy:
             y_noise_vector = model.predict(x_noise_vector)
-            y_noisy_new[idx, :, :] = y_noise_vector
-        #plot the first noisy vector in y_noisy_new
-        # plt.plot(x_clean[:, 0], y_noisy[0, :, 0], label="y1_noisy")
-        # plt.plot(x_clean[:, 0], y_noisy_new[0, :, 0], label="y1_noisy_new")
-        # plt.legend()
-        # plt.show()
-        weights = estimate_weights(f"{model_path}/model.pkl", input_features)
-        print("weights are", weights)
+            np.append(y_noisy_new, y_noise_vector)
+        
         outer_dist=["Euclidean", "L1"]
         # for each output, calculate robustness metric and then calculate the average of all outputs
         for dist in outer_dist:
             rm_vals = []
             for i in range(len(equations_str)):
-                
-                rm = metric.calculate_metric(x_clean, y_clean[:, i], x_hat=x_noisy, y_hat=y_noisy_new[:, :, i], outer_dist=outer_dist, weights=weights)
-                print("rm is", rm)
+                rm = metric.calculate_metric(x_clean, y_clean[:, i], x_hat=x_noisy, y_hat=y_noisy_new[:, i], outer_dist=outer_dist)
                 rm_vals.append(rm[dist]["Ratio"])
             # calculate the 1-norm of the rm_vals    
             print("avg is", np.linalg.norm(rm_vals, ord=1), "for", dist)
 
         # rm = metric.calculate_metric(x_clean, y_clean, x_hat=x_noisy, y_hat=y_noisy_new, outer_dist=["Euclidean", "L1"])
 
-        ########## save rm to txt file
-        if not os.path.exists(f"{model_path}/rm_results"):
-            os.makedirs(f"{model_path}/rm_results")
-        with open(f"{model_path}/rm_results/rm.txt", "w") as outfile:
-            json.dump(rm, outfile, indent=4)
+        ########### save rm to txt file
+        # if not os.path.exists(f"{model_path}/rm_results"):
+        #     os.makedirs(f"{model_path}/rm_results")
+        # with open(f"{model_path}/rm_results/rm.txt", "w") as outfile:
+        #     json.dump(rm, outfile, indent=4)
 
 if __name__ == '__main__':
     main()

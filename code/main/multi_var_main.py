@@ -33,8 +33,6 @@ def main():
     input_shape = num_inputs
     for config in configs["models"]:
         training_type = config["training_type"]
-        print("************************ Training type is ************************", training_type)
-        
         models_folder = f"{res_folder}/{config['type']}/{config['training_type']}/models_all"
         plots_folder = f"{res_folder}/{config['type']}/{config['training_type']}/plots"
         xy_train, xy_valid, xy_test, _ , _, _, _= dataset_generator.split(config, metric_instance=metric)

@@ -161,5 +161,8 @@ cython_debug/
 
 # results folders
 results_*/
+
+code/configs/equations_all/
+code/packages.txt
 .vscode/
 equations_config/

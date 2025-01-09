@@ -1,15 +1,13 @@
 import datetime
 import os
-from matplotlib import pyplot as plt
+import sys
+sys.path.append('..')
 from DataGens.NoiseGenerator import NoiseGenerator
 import numpy as np
 from DataGens.DatasetGenerator import DatasetGenerator
 from Training.ModelTrainer import ModelTrainer
 import json
-
-from Training.Models import LinearModel
 from Training.CustomModel import CustomModel
-from utils.helpers import evaluate_and_plot, evaluate
 from Metric.RobustnessMetric import RobustnessMetric
 from Metric.weights_estimation import estimate_weights
 
@@ -37,7 +35,6 @@ def main():
         plots_folder = f"{res_folder}/{config['type']}/{config['training_type']}/plots"
  
         training_type = config["training_type"]
-        print("************************ Training type is ************************", training_type)
         
         xy_train, xy_valid, xy_test, xy_noisy, xy_clean, gx_gy, indices = dataset_generator.split(config)
         x_noisy, y_noisy = xy_noisy
@@ -147,7 +144,6 @@ def main():
                     best_model = model
                     best_history = history
                 models.append(model)
-                print("history", history)
                 losses.append(history['loss'][-1])
                 v_loss.append(history['val_loss'][-1])
                 last_epoch.append(history['epoch'])
@@ -163,7 +159,6 @@ def main():
             # trainer.model = best_model
             # trainer.save_model(f"{model_path}")     
             if not os.path.exists(plots_folder):
-                print("creating plot path")
                 os.makedirs(plots_folder)
 
         best_model.evaluate_and_plot(xy_test[0], xy_test[1], f"{plots_folder}")

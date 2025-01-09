@@ -1,37 +1,26 @@
 {
     "equation": "q1*q2*r/(4*pi*epsilon*r**3)",
+    "num_samples": 10,
     "models": [
+       
         {
             "type": "linear",
             "model_path": "clean",
             "load": false,
             "training_type": "clean",
             "fit_args": {
-                "epochs": 200,
-                "early_stopping": 20
+                "epochs": 4000,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
                 0,
                 1,
                 2,
                 3
-            ]
-        },
-        {
-            "type": "linear",
-            "model_path": "noise-aware",
-            "load": false,
-            "training_type": "noise-aware",
-            "fit_args": {
-                "epochs": 200,
-                "early_stopping": 20
-            },
-            "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3
-            ]
+            ],
+            "extended_data":false,
+            "sampling_rate": 3
+
         }
     ],
     "features": {
