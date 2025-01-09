@@ -22,8 +22,10 @@ def plot_feature(x,y, x_label, y_label):
 
 def main(res_folder, json_path, loss_fuction, noise_type, epsilon=0.5):
     physical_devices = tf.config.list_physical_devices('GPU')
-    
-    tf.config.set_visible_devices(physical_devices[1],'GPU')  # for using the first GPU
+    if physical_devices:
+        tf.config.set_visible_devices(physical_devices[0], 'GPU')  # use the first GPU
+    else:
+        tf.config.set_visible_devices([], 'GPU')  # no GPU available, use CPU
     tf.keras.mixed_precision.set_global_policy('mixed_float16')
 
     num_noises = 20
