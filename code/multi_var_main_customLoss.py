@@ -15,9 +15,9 @@ from utils.dists import L2_distance
 # def main(res_folder, loss_function):
 def main(res_folder, json_path):
     physical_devices = tf.config.list_physical_devices('GPU')
-    tf.config.set_visible_devices(physical_devices[1],'GPU')  # for using the first GPU
+    # tf.config.set_visible_devices(physical_devices[1],'GPU')  # for using the first GPU
     tf.keras.mixed_precision.set_global_policy('mixed_float16')
-    x_len = 1000
+    x_len = 100
     num_noises = 20
     distribution = 'normal'
     percentage = 0.5
@@ -322,8 +322,8 @@ def main(res_folder, json_path):
                 json.dump(rms, outfile, indent=4)
 
 if __name__ == '__main__':
-    json_files = [f for f in os.listdir('./configs/equations/') if f.endswith('.json')]
-    json_files = ["I_8_14.json"]
+    json_files = [f for f in os.listdir('./equations_configs/') if f.endswith('.json')]
+    json_files = ["I_34_27.json"]
     # Iterate over the JSON files
     for json_file in json_files:
         # Set the res_folder variable based on the name of the JSON file

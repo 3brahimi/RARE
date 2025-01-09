@@ -248,7 +248,6 @@ class RobustnessMetric:
         return results
         
     def bounds_distance(self, x, bounds, dist):
-        
         distsmax = self.calculate_dist(x, bounds[0], dist)
         distsmin = self.calculate_dist(x, bounds[1], dist)
         return [distsmax, distsmin]

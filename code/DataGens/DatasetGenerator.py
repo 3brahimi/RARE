@@ -76,7 +76,12 @@ class DatasetGenerator:
         # print("x_clean", x_clean.shape, "num_samples", self.num_samples)
         # self.noise_generator.num_samples = self.num_samples
         
-
+        # # uncomment these lines to use the meshgrid to generate the input data
+        # x_clean = np.meshgrid(*x_clean)
+        # x_clean = np.array(x_clean)
+        # x_clean = x_clean.reshape(self.num_inputs, -1)
+        # self.num_samples = x_clean.shape[1]
+        # self.noise_generator.num_samples = self.num_samples
         # Generate clean output data according to the specified equation
         if self.num_inputs == 1:
             x_clean = x_clean.T
@@ -126,6 +131,7 @@ class DatasetGenerator:
                     noises = self.noise_generator.generate_noise(random_seed=random_seed)
                     # Add noise to the clean input data
                     x_noisy[:, :, i] = np.array([x[:, i] + noise for noise in noises])
+                    print("x_noisy[:, :, i]", x_noisy[:, :, i])
                 else:
                     x_noisy[:, :, i] = x[:, i]
 
@@ -183,6 +189,11 @@ class DatasetGenerator:
         target_feat_idx = config['noisy_input_feats']
         # Generate clean dataset
         x_clean, y_clean = self.generate_dataset()
+        print("x_clean", x_clean.shape, "y_clean", y_clean.shape)
+        # print(x_clean.shape, y_clean.shape)
+        
+        # x_clean = np.log(x_clean)
+        # y_clean = np.log(y_clean)
         # shape of clean data is (num_samples, num_inputs/features)
 
         y_clean = y_clean.ravel()
@@ -203,13 +214,75 @@ class DatasetGenerator:
                 gx_temp = metric_instance.extract_g(x_hat=x_noisy[:, :, i], x = x_clean[:, i]) if metric_instance else gx_temp
                 # get the distance between gx_temp and x_clean[:, i] as a point-wise distance
                 gx_temp_distances = np.array([L2_distance(x_clean[:, i], gx_temp, type="pointwise")]).flatten()
-                print("gx_temp_distances", len(gx_temp_distances), "gx_temp", len(gx_temp))
                 # gx[:, i] = gx_temp - x_clean[:, i]
                 gx[:, i] = gx_temp
                 # sign = np.sign(gx_temp - x_clean[:, i])
                 
                 # gx[:, i] = gx_temp_distances * sign
-                
+            # extract the bounds of the noisy set
+            pr
+            max_bound, min_bound = metric_instance.extract_bounds(x_noisy)
+            
+            # plot features of x_clean and y_clean as the output in 3-d plot
+            fig = plt.figure()
+            
+            
+            
+            ax = fig.add_subplot(111, projection='3d')
+            # reshape for meshgrid plotsni
+            x_clean_0_mesh = x_clean[:,0].reshape(100, 100)
+            x_clean_1_mesh = x_clean[:,1].reshape(100, 100)
+            y_clean_mesh = y_clean.reshape(100, 100)
+            
+            ax.plot_surface(x_clean_0_mesh, x_clean_1_mesh, y_clean_mesh, cmap='viridis')
+            ax.set_xlabel('$h$')
+            ax.set_ylabel('$\omega$')
+            ax.set_zlabel('$U$')
+            ax.set_title(r'$U = \frac{h}{2\pi} \cdot \omega$')
+            
+            # ax.plot_surface(x_clean_0_mesh, x_clean_1_mesh, y_clean_mesh, cmap='viridis')
+            # the first value of y_clean
+            y_clean_first  = y_clean_mesh[0,0]
+            
+            # the last value of x_clean_1
+            x_clean_1_last = x_clean_1_mesh[-1,-1]
+            
+            # the last value of x_clean_0
+            x_clean_last_0 = x_clean_0_mesh[-1,-1]
+            
+            # # now repeat the first value of x_clean_0 to match the shape of x_clean_0
+            # x_clean_1_last = np.full((100, 100), x_clean_1_last)
+            # y_clean_first = np.full((100, 100), y_clean_first)
+            
+            
+            # # y_clean_temp = np.full((100, 100), y_clean_temp)
+            # # now plot the surface of the the extracted gx instead of the clean data
+            # # minb_0_mesh = min_bound[:,0].reshape(100, 100)
+            # # minb_1_mesh = min_bound[:,1].reshape(100, 100)
+            # # ax.plot_surface(minb_0_mesh, minb_1_mesh, y_clean_mesh, cmap='viridis')
+            
+            # # maxb_0_mesh = max_bound[:,0].reshape(100, 100)
+            # # maxb_1_mesh = max_bound[:,1].reshape(100, 100)
+            # # ax.plot_surface(maxb_0_mesh, maxb_1_mesh, y_clean_mesh, cmap='viridis')
+            gx_0_mesh = gx[:,0].reshape(100, 100)
+            gx_1_mesh = gx[:,1].reshape(100, 100)
+            
+            ax.plot(gx_0_mesh[0, :], gx_1_mesh[0, :], [y_clean_first]*100, color='r')
+            # ax.plot([x_clean_last_0]*100, gx_1_mesh[0, :], [y_clean_first]*100, color='b')
+            
+            
+            # plot the surface of the extracted gx on top of the clean data using another color
+            # ax.contour(gx_0_mesh, gx_1_mesh, y_clean_mesh[0,100], cmap='cividis', alpha=0.5)
+            # ax.plot_surface(gx_0_mesh, gx_1_mesh, y_clean_temp[np.newaxis,:], cmap='plasma', alpha=0.3)
+            # plot gx_0 when gx_1 is the last value and y_clean is the first value
+            
+            # ax.plot_surface(gx_0_mesh, gx_1_mesh, y_clean_temp, cmap='plasma', alpha=0.3)
+            ax.set_xlabel('$h$')
+            ax.set_ylabel('$\omega$')
+            ax.set_zlabel('$U$')
+            ax.set_title(r'$U = \frac{h}{2\pi} \cdot \omega$')
+            plt.savefig("./clean_data.png")
+            exit()
         gx_y = y_clean
         x_train, y_train, x_valid, y_valid, x_test, y_test, indices_train, indices_valid = None, None, None, None, None, None, None, None
         if "clean" in training_type:
