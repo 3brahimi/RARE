@@ -1,4 +1,5 @@
 import numpy as np
+
 class NoiseGenerator:
     def __init__(self, num_samples, num_noises, noise_type, variance, percentage=1, **kwargs):
         self.num_samples = num_samples

@@ -42,7 +42,7 @@ def main(res_folder, json_path, loss_fuction, noise_type, epsilon=0.5):
     x_len = configs["num_samples"]
 
     #### initialize the data generators
-    noise_model = NoiseGenerator(num_samples=x_len, num_noises=num_noises, noise_type=distribution, percentage=percentage, epsilon=epsilon)
+    noise_model = NoiseGenerator(num_samples=x_len, num_noises=num_noises, noise_type=distribution, percentage=percentage, epsilon=epsilon, variance=1)
     equation_str = configs["equation"]
     input_features = configs["features"]
     num_inputs = len(input_features)

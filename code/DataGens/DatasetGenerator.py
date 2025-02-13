@@ -414,13 +414,15 @@ class DatasetGenerator:
         - (x_test, y_test): The testing data.
         """
         target_feat_idx = config['noisy_input_feats']
+       
+        
         # Generate clean dataset
         x_clean, y_clean = self.generate_dataset()
         x_clean, y_clean = self.meshgrid_x_y(x_clean)
-        
+
         if self.num_inputs > 1:
             x_clean = x_clean.reshape(x_clean.shape[0], -1).T
-        
+        print("after reshaping x_clean", x_clean.shape, "y_clean", y_clean.shape)
         y_clean = y_clean.ravel()
         
         original_num_samples = self.num_samples
@@ -432,7 +434,7 @@ class DatasetGenerator:
 
         # Modulate the clean dataset
         x_noisy, y_noisy = self.modulate_clean(x_clean, y_clean, target_feat_idx, random_seeds)
-
+        
         training_type = config["training_type"]
         
         # Extract the noisy signal with the maximum distance from the clean signal --> Gx
@@ -462,13 +464,13 @@ class DatasetGenerator:
             sampling_rate = ceil(x_clean.shape[0]/((original_num_samples*2)*x_clean.shape[1]))
         print(f"Downsampling the data to {sampling_rate} of the original size")
 
-        x_clean = x_clean[::sampling_rate]
-        y_clean = y_clean[::sampling_rate]
-        x_noisy = x_noisy[:, ::sampling_rate]
-        y_noisy = y_noisy[:, ::sampling_rate]
-        gx = gx[::sampling_rate]
-        gx_y = gx_y[::sampling_rate]
-
+        # x_clean = x_clean[::sampling_rate]
+        # y_clean = y_clean[::sampling_rate]
+        # x_noisy = x_noisy[:, ::sampling_rate]
+        # y_noisy = y_noisy[:, ::sampling_rate]
+        # gx = gx[::sampling_rate]
+        # gx_y = gx_y[::sampling_rate]
+        
         self.num_samples = x_clean.shape[0]
         self.noise_generator.num_samples = self.num_samples
         
@@ -495,7 +497,7 @@ class DatasetGenerator:
             x_train, y_train, x_valid, y_valid, x_test, y_test, indices_train, indices_valid = noisy_data(x_clean, y_clean, gx, gx_y)
                 
         return (x_train, y_train), (x_valid, y_valid), (x_test, y_test), (x_noisy, y_noisy), (x_clean, y_clean), (gx, gx_y), (indices_train, indices_valid)
-
+    
     def add_multiplications(self, x_clean):
         new_features = []
         # print(x_clean.shape, y_clean.shape)
