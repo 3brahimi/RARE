@@ -1,7 +1,7 @@
 # Robustness Testing and Training Against Perturbations
 
 ## Overview
-This project focuses on evaluating and improving the robustness of machine learning models against various types of perturbations.
+This project focuses on evaluating and improving the robustness of machine learning models against input perturbations.
 The code generates datasets with noise, trains models, and evaluates their robustness using specific metrics.
 
 ## Main Components
