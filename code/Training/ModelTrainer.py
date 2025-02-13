@@ -7,6 +7,7 @@ class ModelTrainer:
             "linear": LinearModel,
             "Linear": LinearModel,
             "cnn": CNNModel,
+            "CNN": CNNModel,
             "LR": LinearRegressionModel,
             "RF": RandomForestModel,
             # "CustomModel": CustomModel,
