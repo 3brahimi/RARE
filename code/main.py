@@ -138,8 +138,9 @@ def main(res_folder, json_file, loss_function, noise_type):
                 config["fit_args"]["y_clean_valid"] = tf.convert_to_tensor(y_clean_valid, dtype=tf.float64)
                 config["fit_args"]["y_clean_train"] = tf.convert_to_tensor(y_clean_train, dtype=tf.float64)
             
-            model_num = 2
-            for i in range(model_num):
+            # train multiple models
+            models_num = 10
+            for i in range(models_num):
                 if not os.path.exists(models_folder):
                     os.makedirs(models_folder)
                 else:
