@@ -15,6 +15,7 @@ from Metric.weights_estimation import estimate_weights
 
 
 def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_all, robustness_res_path):
+    print("Evaluating robustness of models..")
     x_clean, y_clean = dataset_generator.generate_dataset()
     target_features = config["noisy_input_feats"]
     
@@ -113,12 +114,21 @@ def main(res_folder, json_file, loss_function, noise_type):
         models_folder = f"{res_folder}/{config['type']}/{config['training_type']}/models_all"
 
         if config["load"] == True:
-            print("Loading model..")
-            # model = trainer.load_model(f"{model_path}/model.pkl")
-            # history = None
-            # plot_path = f"{model_path}/plots"
-            # if not os.path.exists(plot_path):
-            #     os.makedirs(plot_path)
+            models_path = config["model_path"]
+            # change epsilon and loss function in model_path according to eps and loss_function values: /home/qamar/workspace/crml/code/results_I_27_6/loss_custom_loss/laplace_dp/epsilon_0.1/linear/clean/models_all
+            models = []
+            losses = np.loadtxt(f"{models_path}/losses.txt")                
+            for i in range(2):
+                model_path_i = f"{models_path}/model_{i+1}"
+                print(model_path_i)
+                print("input_shape", input_shape)
+                trainer = ModelTrainer().get_model(config["type"], shape_input=input_shape, loss_function=loss_function)
+                model = trainer.model
+                model.compile(optimizer='adam', loss=loss_function)
+                model.load_weights(f"{model_path_i}/model_weights.h5")                      
+                models.append(model)
+            print("Models loaded successfully")
+            
         else:
             models = []
             losses = []
@@ -129,7 +139,6 @@ def main(res_folder, json_file, loss_function, noise_type):
             
             if loss_function == "msep":
                 config["fit_args"]["metric"] = metric
-                # config["fit_args"]["x_noisy"] = tf.convert_to_tensor(xy_noisy[0], dtype=tf.float64)
                 config["fit_args"]["x_noisy_valid"] = tf.convert_to_tensor(x_noisy, dtype=tf.float64)
                 config["fit_args"]["x_noisy_train"] = tf.convert_to_tensor(x_noisy_train, dtype=tf.float64)
                 config["fit_args"]["len_input_features"] = input_shape
@@ -189,14 +198,14 @@ def main(res_folder, json_file, loss_function, noise_type):
                     outfile.write("\n".join(str(item) for item in valid_losses_all_epochs))
             
             
-            # evaluate models robustness
-            test_dataset_generator = DatasetGenerator(equation_str, test_noise_model, input_features, num_samples=x_len)   
-            
-            # models_robustness_folder = f"{res_folder}/{config['type']}/{config['training_type']}/robustness"
-            models_robustness_folder = f"{models_folder}/robustness"
-            if not os.path.exists(models_robustness_folder):
-                os.makedirs(models_robustness_folder)
-            evaluate_robustness(models, test_dataset_generator, config, metric, random_seeds_all, models_robustness_folder)
+        # evaluate models robustness
+        test_dataset_generator = DatasetGenerator(equation_str, test_noise_model, input_features, num_samples=x_len)   
+        
+        # models_robustness_folder = f"{res_folder}/{config['type']}/{config['training_type']}/robustness"
+        models_robustness_folder = f"{models_folder}/robustness"
+        if not os.path.exists(models_robustness_folder):
+            os.makedirs(models_robustness_folder)
+        evaluate_robustness(models, test_dataset_generator, config, metric, random_seeds_all, models_robustness_folder)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run robustness testing and training.")
