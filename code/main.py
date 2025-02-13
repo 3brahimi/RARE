@@ -30,10 +30,6 @@ def evaluate_robustness(model_path, dataset_generator, config, metric, random_se
     except Exception as e:
         print(f"Error writing to file {robustness_res_path}/rm_values.txt: {e}")
 
-
-
-
-
 def main(res_folder, json_file, loss_function, noise_type):
 
     with open(json_file) as f:
