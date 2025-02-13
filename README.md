@@ -23,7 +23,7 @@ The code generates datasets with noise, trains models, and evaluates their robus
 pip install -r requirements.txt
 ```
 2. **Configuration**: Default configurations for a subset of equations are set in `config/equations`.
-Each equation has a single JSON file that defines the model type, training type, number of epochs, early stopping criteria, indices of target features for perutbation, and other relevant parameters.
+Each equation has a single JSON file that defines the model type, training type, number of epochs, early stopping criteria, indices of target features for perturbation, and other relevant parameters.
 
 3. **Run the Main Script**: Execute the `main.py` script will perform the training process for a set of equations using MLP model with Mean Squared Error as the loss function.
 
