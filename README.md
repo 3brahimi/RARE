@@ -31,7 +31,7 @@ Each equation has a single JSON file that defines the model type, training type,
 ```bash
 python main.py
 ```
-For running the main script using `msep` as a loss function, run:
+To train the same equations using MLP and the regularized loss function `msep`:
 ```bash
 python main.py --loss_function=msep
 ```
