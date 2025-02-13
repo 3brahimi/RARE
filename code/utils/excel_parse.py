@@ -24,19 +24,9 @@ for _, row in df.iterrows():
                     "epochs": 200,
                     "early_stopping": 20
                 },
-                "noisy_input_feats": [0, 1, 2, 3]
-            },
-            {
-                "type": "linear",
-                "model_path": "noise-aware",
-                "load": False,
-                "training_type": "noise-aware",
-                "fit_args": {
-                    "epochs": 200,
-                    "early_stopping": 20
-                },
-                "noisy_input_feats": [0, 1, 2, 3]
+                "noisy_input_feats": []
             }
+            
         ],
         "features": {}
     }
@@ -57,12 +47,13 @@ for _, row in df.iterrows():
             "type": "float",
             "range": [var_low, var_high]
         }
-
+        # Add the variable index to the noisy_input_feats list
+        output['models'][0]['noisy_input_feats'].append(i - 1)
     # Convert the dictionary to a JSON string
     output_json = json.dumps(output, indent=4)
-
+    print(output_json)
     # Save the JSON string to a file
     filename = row['Filename'].replace(' ', '_')
     filename = filename.replace('.', '_')+ '.json'
-    with open(f"../configs/equations_config/{filename}", 'w') as f:
+    with open(f"../configs/equations/{filename}", 'w') as f:
         f.write(output_json)
