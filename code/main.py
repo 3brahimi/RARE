@@ -113,6 +113,7 @@ def main(res_folder, json_file, loss_function, noise_type):
         
         models_folder = f"{res_folder}/{config['type']}/{config['training_type']}/models_all"
 
+        # if path is specified, load the models
         if config["load"] == True:
             models_path = config["model_path"]
             # change epsilon and loss function in model_path according to eps and loss_function values: /home/qamar/workspace/crml/code/results_I_27_6/loss_custom_loss/laplace_dp/epsilon_0.1/linear/clean/models_all
@@ -128,7 +129,8 @@ def main(res_folder, json_file, loss_function, noise_type):
                 model.load_weights(f"{model_path_i}/model_weights.h5")                      
                 models.append(model)
             print("Models loaded successfully")
-            
+        
+        # if load is False, train the models  
         else:
             models = []
             losses = []
@@ -136,7 +138,7 @@ def main(res_folder, json_file, loss_function, noise_type):
             valid_losses_all_epochs = []
             last_epoch = []
             rm_vals = []
-            
+            # set the fit arguments if the loss function is msep
             if loss_function == "msep":
                 config["fit_args"]["metric"] = metric
                 config["fit_args"]["x_noisy_valid"] = tf.convert_to_tensor(x_noisy, dtype=tf.float64)
@@ -159,11 +161,12 @@ def main(res_folder, json_file, loss_function, noise_type):
                 
                 model, history = trainer.compile_and_fit(xy_train=xy_train, xy_valid=xy_valid, fit_args=config["fit_args"])     
                 models.append(model)
+                # save the results
                 if history is not None:
-                    if loss_function == "custom_loss":
+                    if loss_function == "msep":
                         losses.append(history.history['mse'][-1])
                         valid_losses.append(history.history['val_mse'][-1])
-                        rm_vals.append(history.history['custom_metric'])
+                        rm_vals.append(history.history['R'])
                         valid_losses_all_epochs.append(history.history['val_mse'])
                     else:
                         losses.append(history.history['loss'][-1])
@@ -184,7 +187,6 @@ def main(res_folder, json_file, loss_function, noise_type):
                         os.makedirs(f"{models_folder}/model_{i+1}")
                     model.save_weights(f"{models_folder}/model_{i+1}/model_weights.h5")
                 
-                # trainer.save_model(model, f"./{model_path}")
                 # save the losses list in a txt file
                 with open(f"{models_folder}/losses.txt", "w") as outfile:
                     outfile.write("\n".join(str(item) for item in losses))
