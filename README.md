@@ -31,3 +31,14 @@ Each equation has a single JSON file that defines the model type, training type,
 python main.py
 ```
 4. **View Results**: After running the main script, the results of the training, including metrics and model performance, will be saved in the specified output directory. You can analyze these results to understand the robustness of your models.
+
+## Generating the Full Set of Equations from AI-Feynman
+
+To generate the full set of equations with default values, run the `excel_parse.py` script located in the `utils` directory. This script will parse an Excel file containing the equations and generate the corresponding JSON configuration files.
+
+```bash
+cd utils/
+python excel_parse.py
+```
+
+Make sure the Excel file, which can be downloaded from [AI-Feynman](https://space.mit.edu/home/tegmark/aifeynman.html), is properly formatted and located in the expected directory as specified in the script.
