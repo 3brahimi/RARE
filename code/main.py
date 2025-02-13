@@ -9,7 +9,9 @@ import json
 import argparse
 
 from Metric.RobustnessMetric import RobustnessMetric
-from utils.helpers import evaluate_and_plot
+from utils.helpers import evaluate_and_plot, calculate_baseline_metric
+from utils.dists import L2_distance
+from Metric.weights_estimation import estimate_weights
 
 
 def evaluate_robustness(model_path, dataset_generator, config, metric, random_seeds_all):
@@ -29,6 +31,9 @@ def evaluate_robustness(model_path, dataset_generator, config, metric, random_se
         print(f"Error writing to file {robustness_res_path}/rm_values.txt: {e}")
 
 
+
+
+
 def main(res_folder, json_file, loss_function, noise_type):
 
     with open(json_file) as f:
@@ -46,6 +51,8 @@ def main(res_folder, json_file, loss_function, noise_type):
     equation_str = configs["equation"]
     input_features = configs["features"]
     num_inputs = len(input_features)
+    input_shape = num_inputs
+    
     
     dataset_generator = DatasetGenerator(equation_str, noise_model, input_features, num_samples=x_len)
     metric = RobustnessMetric()
@@ -53,8 +60,47 @@ def main(res_folder, json_file, loss_function, noise_type):
     random_seeds_all = [np.linspace(0, 1000, num_inputs, dtype=int) for _ in range(no_noisy_tests)]
 
     for idx, config in enumerate(configs["models"]):
-        xy_train, xy_valid, xy_test, xy_noisy, xy_clean, gx_gy, indices = dataset_generator.split(config, metric_instance=metric)        
-        trainer = ModelTrainer().get_model(config["type"], shape_input=num_inputs, loss_function=loss_function)
+        xy_train, xy_valid, xy_test, xy_noisy, xy_clean, gx_gy, indices = dataset_generator.split(config, metric_instance=metric)       
+        # Extract noisy and clean data
+        x_noisy, y_noisy = xy_noisy
+        x_clean, y_clean = xy_clean
+        
+        # Extract gradient information
+        gx, gx_y = gx_gy
+        
+        # Extract training and validation indices
+        indices_train, indices_valid = indices
+        
+        # Split noisy data into training and validation sets
+        x_noisy_train = x_noisy[:, indices_train, :]
+        x_noisy_valid = x_noisy[:, indices_valid, :]
+        
+        y_noisy_train = y_noisy[:, indices_train, ]
+        y_noisy_valid = y_noisy[:, indices_valid, ]
+
+        x_clean_train = x_clean[indices_train, :]
+        x_clean_valid = x_clean[indices_valid, :]
+        y_clean_train = y_clean[indices_train,]
+        y_clean_valid = y_clean[indices_valid,]
+        
+        
+        # Calculate the baseline metric and weights
+        bl_denominator, bl_weights = calculate_baseline_metric(dataset_generator, metric, x_clean_train, y_clean_train, x_noisy_train, y_noisy_train, input_features, res_folder)
+        print(f"Baseline denominator: {bl_denominator}", bl_weights)
+        
+        ############################# calculate the nominator of the metric in case of custom loss
+        gxs_dists = []
+        for i in range(num_inputs):
+            gx = metric.extract_g(x_clean_valid[:, i], x_hat=x_noisy_valid[:, :, i])
+            gx, x_clean_valid_i_scaled = metric.rescale_vector(true=x_clean_valid[:, i], noisy=gx)
+            gxs_dists.append(L2_distance(gx, x_clean_valid_i_scaled, type="overall"))
+
+        # multiply each gx by the corresponding weight
+        gxs_dists = gxs_dists * bl_weights
+        gxs_dists = np.sum(gxs_dists)
+        
+        trainer = ModelTrainer().get_model(config["type"], shape_input=input_shape, loss_function=loss_function)
+        
         models_folder = f"{res_folder}/{config['type']}/{config['training_type']}/models_all"
         model_path = f'{models_folder}/model_{idx}'
 
@@ -65,18 +111,22 @@ def main(res_folder, json_file, loss_function, noise_type):
             if not os.path.exists(plot_path):
                 os.makedirs(plot_path)
         else:
+            
+            if loss_function == "msep":
+                config["fit_args"]["metric"] = metric
+                # config["fit_args"]["x_noisy"] = tf.convert_to_tensor(xy_noisy[0], dtype=tf.float64)
+                config["fit_args"]["x_noisy_valid"] = tf.convert_to_tensor(x_noisy, dtype=tf.float64)
+                config["fit_args"]["x_noisy_train"] = tf.convert_to_tensor(x_noisy_train, dtype=tf.float64)
+                config["fit_args"]["len_input_features"] = input_shape
+                config["fit_args"]["bl_ratio"] = tf.convert_to_tensor(bl_denominator, dtype=tf.float64)
+                config["fit_args"]["nominator"] = tf.convert_to_tensor(gxs_dists, dtype=tf.float64)
+                config["fit_args"]["y_clean_valid"] = tf.convert_to_tensor(y_clean_valid, dtype=tf.float64)
+                config["fit_args"]["y_clean_train"] = tf.convert_to_tensor(y_clean_train, dtype=tf.float64)
+                
             if not os.path.exists(model_path):
                 os.makedirs(model_path)
-            model, history = trainer.compile_and_fit(xy_train=xy_train, xy_valid=xy_valid, fit_args=config["fit_args"])
-            
-            
-            trainer.save_model(model, f"./{model_path}") 
-        # plot_path = f"{model_path}/plots"
-            # if not os.path.exists(plot_path):
-            #     os.makedirs(plot_path)
-        # evaluate_and_plot(model, history, xy_test, plot_path)
-        
-        ##### robustness evaluation   
+            model, history = trainer.compile_and_fit(xy_train=xy_train, xy_valid=xy_valid, fit_args=config["fit_args"])     
+            trainer.save_model(model, f"./{model_path}")
         test_dataset_generator = DatasetGenerator(equation_str, test_noise_model, input_features, num_samples=x_len)     
         evaluate_robustness(model_path, test_dataset_generator, config, metric, random_seeds_all)
 
@@ -95,5 +145,5 @@ if __name__ == '__main__':
     for json_file in eqs_json_files:
         res_folder = f"./results_{os.path.splitext(json_file)[0]}/loss_{args.loss_function}/{args.noise_type}"
         json_path = f"./configs/equations/{json_file}"
-        
+        print(f"Running robustness testing and training for {json_file}.. with noise type {args.noise_type} and loss function {args.loss_function}")
         main(res_folder, json_path, loss_function=args.loss_function, noise_type=args.noise_type)
