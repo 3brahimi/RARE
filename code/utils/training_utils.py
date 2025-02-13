@@ -1,5 +1,6 @@
 
 import tensorflow as tf
+from tensorflow.keras.losses import mean_squared_error
 
 def rescale_vectors(x, y):
     min_val = tf.reduce_min(x)
@@ -50,7 +51,7 @@ class CustomLoss(tf.keras.losses.Loss):
 
     def call(self, y_true, y_pred):
         # Calculate the base loss (e.g., MSE loss)
-        base_loss = tf.keras.losses.mean_squared_error(y_true, y_pred)
+        base_loss = mean_squared_error(y_true, y_pred)
         
         y_noisy = tf.vectorized_map(self.apply_model, self.x_noisy)
         y_noisy_reshaped = tf.reshape(y_noisy, (self.x_noisy.shape[0], self.x_noisy.shape[1], 1))
@@ -73,7 +74,7 @@ class CustomLossDP(CustomLoss):
         super().__init__(model, metric, y_clean, x_noisy, len_input_features, bl_ratio, **kwargs)
         self.nominator = nominator
     def call(self, y_true, y_pred):
-        base_loss = tf.keras.losses.mean_squared_error(y_true, y_pred)
+        base_loss = mean_squared_error(y_true, y_pred)
         y_noisy = tf.vectorized_map(self.apply_model, self.x_noisy)
 
         gy = self.extract_g(y_noisy, self.y_clean)
@@ -86,9 +87,7 @@ class CustomLossDP(CustomLoss):
         
         ratio = tf.cast(ratio, tf.float64)
         base_loss = tf.cast(base_loss, tf.float64)
-        # loss = tf.math.add(base_loss, ratio)
         penalty = tf.math.multiply(base_loss, ratio)
-        # penalty = tf.math.multiply(penalty, tf.cast(tf.constant(3.), tf.float64))
         loss = tf.math.add(base_loss, penalty)
         # tf.print("base_loss: ", base_loss, "loss: ", loss, "gy_y_dist: ", gy_y_dist, "bl_ratio: ", self.bl_ratio, "ratio: ", ratio)
         return loss

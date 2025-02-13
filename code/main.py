@@ -123,8 +123,12 @@ def main(res_folder, json_file, loss_function, noise_type):
                 os.makedirs(model_path)
             model, history = trainer.compile_and_fit(xy_train=xy_train, xy_valid=xy_valid, fit_args=config["fit_args"])     
             trainer.save_model(model, f"./{model_path}")
-        test_dataset_generator = DatasetGenerator(equation_str, test_noise_model, input_features, num_samples=x_len)     
-        evaluate_robustness(model_path, test_dataset_generator, config, metric, random_seeds_all)
+        test_dataset_generator = DatasetGenerator(equation_str, test_noise_model, input_features, num_samples=x_len)   
+        
+        models_robustness_folder = f"{res_folder}/{config['type']}/{config['training_type']}/robustness"
+        if not os.path.exists(models_robustness_folder):
+            os.makedirs(models_robustness_folder)
+        evaluate_robustness(models_robustness_folder, test_dataset_generator, config, metric, random_seeds_all)
 
 
 if __name__ == '__main__':

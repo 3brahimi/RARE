@@ -464,12 +464,12 @@ class DatasetGenerator:
             sampling_rate = ceil(x_clean.shape[0]/((original_num_samples*2)*x_clean.shape[1]))
         print(f"Downsampling the data to {sampling_rate} of the original size")
 
-        # x_clean = x_clean[::sampling_rate]
-        # y_clean = y_clean[::sampling_rate]
-        # x_noisy = x_noisy[:, ::sampling_rate]
-        # y_noisy = y_noisy[:, ::sampling_rate]
-        # gx = gx[::sampling_rate]
-        # gx_y = gx_y[::sampling_rate]
+        x_clean = x_clean[::sampling_rate]
+        y_clean = y_clean[::sampling_rate]
+        x_noisy = x_noisy[:, ::sampling_rate]
+        y_noisy = y_noisy[:, ::sampling_rate]
+        gx = gx[::sampling_rate]
+        gx_y = gx_y[::sampling_rate]
         
         self.num_samples = x_clean.shape[0]
         self.noise_generator.num_samples = self.num_samples
