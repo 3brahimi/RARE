@@ -261,3 +261,23 @@ def evaluate_and_plot(model, history, xy_test, path="./"):
         plt.legend()
         plt.savefig(f"{path}/loss_history.png", bbox_inches='tight', dpi=300)
         
+        
+def calculate_baseline_metric(dataset_generator, metric, x_clean, y_clean, x_noisy, y_noisy, input_features, res_folder):
+    
+    y_noisy_bl = np.zeros((y_noisy.shape[0], y_noisy.shape[1]))
+    for idx_shape, x_noise_vector in enumerate(x_noisy):
+        y_noise_vector = dataset_generator.apply_equation(x_noise_vector[:, :len(input_features)])
+        y_noisy_bl[idx_shape, :] = y_noise_vector.flatten()
+    
+    outer_dists = ["Euclidean"]
+    correct_weights = estimate_weights(model_path=f"{res_folder}/baseline/", inputs=input_features, dataset_generator=dataset_generator,
+                                       num_samples=1000, model_type="expression")
+    
+    rm_bl_train = metric.calculate_metric(x_clean, y_clean, 
+                                          x_hat=x_noisy, y_hat=y_noisy_bl,
+                                          outer_dist=outer_dists, weights=correct_weights, path=f"{res_folder}/baseline/training")["Euclidean"]
+    
+    with open(f"{res_folder}/baseline/training/rm.txt", "w") as outfile:
+        outfile.write(str(rm_bl_train))
+    
+    return rm_bl_train["Output distance"], correct_weights        
