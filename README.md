@@ -20,6 +20,7 @@ The code generates datasets with noise, trains models, and evaluates their robus
 
 1. **Install requirements**: Install the requirements file using the command:
 ```bash
+cd code
 pip install -r requirements.txt
 ```
 2. **Configuration**: Default configurations for a subset of equations are set in `config/equations`.
@@ -30,6 +31,11 @@ Each equation has a single JSON file that defines the model type, training type,
 ```bash
 python main.py
 ```
+For running the main script using `msep` as a loss function, run:
+```bash
+python main.py --loss_function=msep
+```
+
 4. **View Results**: After running the main script, the results of the training, including metrics and model performance, will be saved in the specified output directory. You can analyze these results to understand the robustness of your models.
 
 ## Generating the Full Set of Equations from AI-Feynman
