@@ -260,17 +260,11 @@ class LinearModel(BaseModel):
     
             if self.loss_function == "msep":
                 self._compile_custom_loss(fit_args_copy, optimizer)
-                early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_mse', patience=fit_args_copy["early_stopping"])
-
             else:
                 self.model.compile(optimizer=optimizer, loss=self.loss_function)
     
             fit_args_copy["callbacks"] = [early_stopping]
-            fit_args_new = {}
-            for key, value in fit_args_copy.items():
-                if key == 'early_stopping':
-                    continue
-                fit_args_new[key] = value
+            fit_args_new = {key: value for key, value in fit_args_copy.items() if key != 'early_stopping'}
     
             history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=2, **fit_args_new)
     
@@ -386,17 +380,12 @@ class CNNModel(BaseModel):
 
         if self.loss_function == "msep":
             self._compile_custom_loss(fit_args_copy, optimizer)
-            early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_mse', patience=fit_args_copy["early_stopping"])
-
         else:
             self.model.compile(optimizer=optimizer, loss=self.loss_function)
 
         fit_args_copy["callbacks"] = [early_stopping]
-        fit_args_new = {}
-        for key, value in fit_args_copy.items():
-            if key == 'early_stopping':
-                continue
-            fit_args_new[key] = value
+        fit_args_new = {key: value for key, value in fit_args_copy.items() if key != 'early_stopping'}
+
         history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=2, **fit_args_new)
 
         return self.model, history
@@ -465,12 +454,11 @@ class RandomForestModel(BaseModel):
 
         return self.model, history
 
-    def save_model(self, path):
-        print("saving model")
+    def save_model(self, model, path):
         with open(f"{path}/model.pkl", 'wb') as f:
             pickle.dump(self.model, f)
 
-    def load_model(self, filepath, model_obj=None):
+    def load_model(self, filepath, model_obj):
         with open(f'{filepath}/model.pkl', 'rb') as f:
             self.model = pickle.load(f)
         return self.model
@@ -507,16 +495,15 @@ class LinearRegressionModel(BaseModel):
         
         return self.model, history
     
-    def save_model(self, path):
-        print("saving model")
+    def save_model(self, model, path):
         with open(f"{path}/model.pkl", 'wb') as f:
             pickle.dump(self.model, f)
-
-    def load_model(self, filepath, model_obj=None):
-        with open(f'{filepath}/model.pkl', 'rb') as f:
-            self.model = pickle.load(f)
-        return self.model
-
+    
+    def load_model(self, filepath, model_obj):
+        
+        model = pickle.load(open(f'{filepath}/model.pkl', 'rb'))
+        
+        return model
     def evaluate(self, x, y):
         return self.loss_function(self.model.predict(x), y).numpy()
     
