@@ -1,6 +1,6 @@
 {
     "equation": "exp(-(theta/sigma)**2/2)/(sqrt(2*pi)*sigma)",
-    "num_samples": 100,
+    "num_samples": 64,
     "models": [
         {
             "type": "linear",
@@ -9,52 +9,7 @@
             "training_type": "clean",
             "fit_args": {
                 "epochs": 600,
-                "early_stopping": 10
-            },
-            "noisy_input_feats": [
-                0,
-                1
-            ],
-            "extended_data": false
-        },
-        {
-            "type": "linear",
-            "model_path": "noise-aware",
-            "load": false,
-            "training_type": "noise-aware",
-            "fit_args": {
-                "epochs": 600,
-                "early_stopping": 10
-            },
-            "noisy_input_feats": [
-                0,
-                1
-            ],
-            "extended_data": false
-        },
-        {
-            "type": "cnn",
-            "model_path": "clean",
-            "load": false,
-            "training_type": "clean",
-            "fit_args": {
-                "epochs": 600,
-                "early_stopping": 10
-            },
-            "noisy_input_feats": [
-                0,
-                1
-            ],
-            "extended_data": false
-        },
-        {
-            "type": "cnn",
-            "model_path": "noise-aware",
-            "load": false,
-            "training_type": "noise-aware",
-            "fit_args": {
-                "epochs": 600,
-                "early_stopping": 10
+                "early_stopping": 40
             },
             "noisy_input_feats": [
                 0,
@@ -62,7 +17,6 @@
             ],
             "extended_data": false
         }
-        
     ],
     "features": {
         "sigma": {

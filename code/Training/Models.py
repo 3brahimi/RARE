@@ -465,13 +465,15 @@ class RandomForestModel(BaseModel):
 
         return self.model, history
 
-    def save_model(self, model, path):
+    def save_model(self, path):
+        print("saving model")
         with open(f"{path}/model.pkl", 'wb') as f:
-            pickle.dump(model, f)
+            pickle.dump(self.model, f)
 
-    def load_model(self, filepath, model_obj):
-        model = pickle.load(open(f'{filepath}/model.pkl', 'rb'))
-        return model
+    def load_model(self, filepath, model_obj=None):
+        with open(f'{filepath}/model.pkl', 'rb') as f:
+            self.model = pickle.load(f)
+        return self.model
 
     def evaluate(self, x, y):
         return self.loss_function(self.model.predict(x), y).numpy()
@@ -505,15 +507,16 @@ class LinearRegressionModel(BaseModel):
         
         return self.model, history
     
-    def save_model(self, model, path):
+    def save_model(self, path):
+        print("saving model")
         with open(f"{path}/model.pkl", 'wb') as f:
             pickle.dump(self.model, f)
-    
-    def load_model(self, filepath, model_obj):
-        
-        model = pickle.load(open(f'{filepath}/model.pkl', 'rb'))
-        
-        return model
+
+    def load_model(self, filepath, model_obj=None):
+        with open(f'{filepath}/model.pkl', 'rb') as f:
+            self.model = pickle.load(f)
+        return self.model
+
     def evaluate(self, x, y):
         return self.loss_function(self.model.predict(x), y).numpy()
     

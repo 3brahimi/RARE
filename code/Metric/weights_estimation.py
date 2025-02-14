@@ -36,13 +36,6 @@ def estimate_weights(model_path, inputs, dataset_generator, training_type="clean
     
     if training_type == "noise-aware":
         param_values[:, -len(inputs):] = 0
-
-    if model_type == "CustomModel":
-        from Training.CustomModel import CustomModel
-        model = CustomModel(input_shape=len(inputs), loss_function="mean_squared_error", output_shape=1)
-        # model = CustomModel.load_model(model_path, input_shape=(len(new_inputs), 2), loss_function="mean_squared_error", output_shape=1)
-        model = keras.models.load_model(model_path)
-
     
     elif model_type == "expression":
         model = dataset_generator
@@ -59,7 +52,7 @@ def estimate_weights(model_path, inputs, dataset_generator, training_type="clean
             model = trainer.model
             customloss = CustomLoss(model=model, metric=metric, y_clean=y_clean, x_noisy=x_noisy, len_input_features=len(input_feats), bl_ratio=bl_ratio)
 
-            optimizer = keras.optimizers.Adam(learning_rate=0.0001)
+            optimizer = keras.optimizers.Adam(learning_rate=0.001)
 
             model.compile(optimizer='adam', loss=customloss)
             model.load_weights(f"{model_path}/model_weights.h5")
@@ -72,9 +65,12 @@ def estimate_weights(model_path, inputs, dataset_generator, training_type="clean
             trainer = ModelTrainer().get_model(model_type, shape_input=len(input_feats)
                                                , loss_function=loss_function)
             model = trainer.model
-            optimizer = keras.optimizers.Adam(learning_rate=0.0001)
-            model.compile(optimizer=optimizer, loss=loss_function)
-            model.load_weights(f"{model_path}/model_weights.h5")
+            if model_type in ["LR", "RF"]:
+                model = trainer.load_model(model_path)
+            else:
+                optimizer = keras.optimizers.Adam(learning_rate=0.001)
+                model.compile(optimizer=optimizer, loss=loss_function)
+                model.load_weights(f"{model_path}/model_weights.h5")
             # model = keras.models.load_model(model_path)
     # param_values = np.reshape(param_values, (param_values.shape[0], len(new_inputs)))
 

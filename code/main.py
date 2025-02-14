@@ -177,8 +177,11 @@ def main(res_folder, json_file, loss_function, noise_type):
                 print("input_shape", input_shape)
                 trainer = ModelTrainer().get_model(config["type"], shape_input=input_shape, loss_function=loss_function)
                 model = trainer.model
-                model.compile(optimizer='adam', loss=loss_function)
-                model.load_weights(f"{model_path_i}/model_weights.h5")                      
+                if config["type"] in ["RF", "LR"]:
+                    model = trainer.load_model(model_path_i)
+                else:
+                    model.compile(optimizer='adam', loss=loss_function)
+                    model.load_weights(f"{model_path_i}/model_weights.h5")                      
                 models.append(model)
             print("Models loaded successfully")
         
@@ -238,7 +241,10 @@ def main(res_folder, json_file, loss_function, noise_type):
                 for i, model in enumerate(models):
                     if not os.path.exists(f"{models_folder}/model_{i+1}"):
                         os.makedirs(f"{models_folder}/model_{i+1}")
-                    model.save_weights(f"{models_folder}/model_{i+1}/model_weights.h5")
+                    if config["type"] in ["RF", "LR"]:
+                        trainer.save_model(f"{models_folder}/model_{i+1}")
+                    else:
+                        model.save_weights(f"{models_folder}/model_{i+1}/model_weights.h5")
                 
                 # save the losses list in a txt file
                 with open(f"{models_folder}/losses.txt", "w") as outfile:
@@ -292,11 +298,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     eqs_json_files = {
-        "I_6_2.json",
-        "I_6_2b.json",
-        "I_12_2.json",
-        "I_12_4.json",
-        "I_25_3.json",
+        "I_6_2b.json"
     }
     
     for json_file in eqs_json_files:
