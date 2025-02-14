@@ -416,7 +416,6 @@ class DatasetGenerator:
 
         if self.num_inputs > 1:
             x_clean = x_clean.reshape(x_clean.shape[0], -1).T
-        print("after reshaping x_clean", x_clean.shape, "y_clean", y_clean.shape)
         y_clean = y_clean.ravel()
         
         original_num_samples = self.num_samples

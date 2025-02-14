@@ -207,17 +207,14 @@ def main(res_folder, json_file, loss_function, noise_type):
                 if not os.path.exists(models_folder):
                     os.makedirs(models_folder)
                 if os.path.exists(model_path_i):
-                    print(f"model_{i+1} already exists, loading the model..")
-                    # load the model
-                    model = trainer.model
-                    model.compile(optimizer='adam', loss=loss_function)
-                    model.load_weights(f"{model_path_i}/model_weights.h5")
+                    print(f"model_{i+1} already exists, add path in case you want to load, or delete the folder to retrain")
+                    continue
                 else:
                     if not os.path.exists(model_path_i):
                         os.makedirs(model_path_i)
                     model, history = trainer.compile_and_fit(xy_train=xy_train, xy_valid=xy_valid, fit_args=config["fit_args"])
                 models.append(model)
-                # save the results
+                # save the training learning curves
                 if history is not None:
                     if loss_function == "msep":
                         losses.append(history.history['mse'][-1])
@@ -281,7 +278,6 @@ def main(res_folder, json_file, loss_function, noise_type):
                 weights = bl_weights
             weights = bl_weights
             models_weights[i] = weights
-            # then we pass the models_weights to the evaluate_robustness function
         
         models_robustness_folder = f"{models_folder}/robustness"
         if not os.path.exists(models_robustness_folder):
@@ -296,7 +292,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     eqs_json_files = {
-        "I_6_2.json"
+        "I_6_2.json",
+        "I_6_2b.json",
+        "I_12_2.json",
+        "I_12_4.json",
+        "I_25_3.json",
     }
     
     for json_file in eqs_json_files:

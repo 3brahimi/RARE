@@ -17,6 +17,54 @@
                 2
             ],
         "extended_data": false
+        },
+        {
+            "type": "linear",
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 1000,
+                "early_stopping": 10
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2
+            ],
+            "extended_data": false
+        },
+        {
+            "type": "cnn",
+            "model_path": "clean",
+            "load": false,
+            "training_type": "clean",
+            "fit_args": {
+                "epochs": 1000,
+                "early_stopping": 10
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2
+            ],
+            "extended_data": false
+        },
+        {
+            "type": "cnn",
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 1000,
+                "early_stopping": 10
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2
+            ],
+            "extended_data": false
         }
     ],
     "features": {

@@ -271,34 +271,34 @@ class LinearModel(BaseModel):
             return self.model, history
     
     def _compile_custom_loss(self, fit_args_copy, optimizer):
-            metric = fit_args_copy["metric"]
-            x_noisy_valid = fit_args_copy["x_noisy_valid"]
-            x_noisy_train = fit_args_copy["x_noisy_train"]
-            len_input_features = fit_args_copy["len_input_features"]
-            bl_ratio = fit_args_copy["bl_ratio"]
-            gx_dist = fit_args_copy["nominator"]
-            y_clean_valid = fit_args_copy["y_clean_valid"]
-            y_clean_train = fit_args_copy["y_clean_train"]
-    
-            del fit_args_copy["metric"]
-            del fit_args_copy["x_noisy_train"]
-            del fit_args_copy["x_noisy_valid"]
-            del fit_args_copy["len_input_features"]
-            del fit_args_copy["bl_ratio"]
-            del fit_args_copy["nominator"]
-            del fit_args_copy["y_clean_valid"]
-            del fit_args_copy["y_clean_train"]
-    
-            loss_inst = CustomLoss(model=self.model, metric=metric, 
-                                   y_clean=y_clean_train, x_noisy=x_noisy_train,
-                                   len_input_features=len_input_features, 
-                                   bl_ratio=bl_ratio)
-    
-            self.model.compile(optimizer=optimizer, 
-                               metrics=["mse", CustomMetric(model=self.model, y_clean=y_clean_valid, x_noisy=x_noisy_valid,
-                                                            len_input_features=len_input_features, 
-                                                            nominator=gx_dist, name="R")],
-                               loss=loss_inst)
+        metric = fit_args_copy["metric"]
+        x_noisy_valid = fit_args_copy["x_noisy_valid"]
+        x_noisy_train = fit_args_copy["x_noisy_train"]
+        len_input_features = fit_args_copy["len_input_features"]
+        bl_ratio = fit_args_copy["bl_ratio"]
+        gx_dist = fit_args_copy["nominator"]
+        y_clean_valid = fit_args_copy["y_clean_valid"]
+        y_clean_train = fit_args_copy["y_clean_train"]
+
+        del fit_args_copy["metric"]
+        del fit_args_copy["x_noisy_train"]
+        del fit_args_copy["x_noisy_valid"]
+        del fit_args_copy["len_input_features"]
+        del fit_args_copy["bl_ratio"]
+        del fit_args_copy["nominator"]
+        del fit_args_copy["y_clean_valid"]
+        del fit_args_copy["y_clean_train"]
+
+        loss_inst = CustomLoss(model=self.model, metric=metric, 
+                               y_clean=y_clean_train, x_noisy=x_noisy_train,
+                               len_input_features=len_input_features, 
+                               bl_ratio=bl_ratio)
+
+        self.model.compile(optimizer=optimizer, 
+                           metrics=["mse", CustomMetric(model=self.model, y_clean=y_clean_valid, x_noisy=x_noisy_valid,
+                                                        len_input_features=len_input_features, 
+                                                        nominator=gx_dist, name="R")],
+                           loss=loss_inst)
     
 class CNNModel(BaseModel):
     def __init__(self, shape_input, loss_function, shape_output=1):
@@ -326,14 +326,13 @@ class CNNModel(BaseModel):
         tf.keras.layers.Reshape((self.shape_input, 1), input_shape=[self.shape_input]),
 
         tf.keras.layers.Conv1D(64, 3, activation='tanh', input_shape=[self.shape_input, 1], kernel_initializer='he_normal', kernel_regularizer="l2", padding='same'),
-        # tf.keras.layers.MaxPooling1D(2),
         tf.keras.layers.Conv1D(64, 3, activation='tanh', padding='same'),
-        # tf.keras.layers.MaxPooling1D(2),
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(self.shape_output)
         ])
         return model
-    def load_model(self, model_obj, filepath):
+
+    def load_model(self, model_obj, filepath, loss_function):
         """
         Loads a saved model.
 
@@ -343,10 +342,9 @@ class CNNModel(BaseModel):
         Returns:
             LinearModel: An instance of the LinearModel class with the loaded model.
         """
-        # model = tf.keras.models.load_model(filepath)
+        model_obj.compile(optimizer=Adam(learning_rate=0.001), loss=loss_function)
         model_obj.load_weights(f"{filepath}/model_weights.h5")
         return model_obj
-    
     def save_model(self, model, path):
         """
         Saves the model to a file.
@@ -363,9 +361,13 @@ class CNNModel(BaseModel):
         Compiles and fits the model using the provided training and validation data.
 
         Args:
-            xy_train (tuple): A tuple containing  the training data (x_train, y_train).
+            xy_train (tuple): A tuple containing the training data (x_train, y_train).
             xy_valid (tuple): A tuple containing the validation data (x_valid, y_valid).
             fit_args (dict): Additional arguments for model fitting.
+
+        Returns:
+            tuple: A tuple containing the trained model and the training history.
+
         """
         self.model = self.model_architecture()
         x_train = xy_train[0]
@@ -374,24 +376,49 @@ class CNNModel(BaseModel):
         y_valid = xy_valid[1]
         fit_args_copy = fit_args.copy()
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=fit_args_copy["early_stopping"])
-        
-        # Compile the model            
-        self.model.compile(optimizer=optimizer, loss=self.loss_function)
+
+        if self.loss_function == "msep":
+            self._compile_custom_loss(fit_args_copy, optimizer)
+        else:
+            self.model.compile(optimizer=optimizer, loss=self.loss_function)
 
         fit_args_copy["callbacks"] = [early_stopping]
-        fit_args_new = {}
-        for key, value in fit_args_copy.items():
-            if key == 'early_stopping':
-                continue
-            fit_args_new[key] = value
-            
-        # set the batch size to be the entire dataset
+        fit_args_new = {key: value for key, value in fit_args_copy.items() if key != 'early_stopping'}
+
         history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=2, **fit_args_new)
 
         return self.model, history
 
+    def _compile_custom_loss(self, fit_args_copy, optimizer):
+        metric = fit_args_copy["metric"]
+        x_noisy_valid = fit_args_copy["x_noisy_valid"]
+        x_noisy_train = fit_args_copy["x_noisy_train"]
+        len_input_features = fit_args_copy["len_input_features"]
+        bl_ratio = fit_args_copy["bl_ratio"]
+        gx_dist = fit_args_copy["nominator"]
+        y_clean_valid = fit_args_copy["y_clean_valid"]
+        y_clean_train = fit_args_copy["y_clean_train"]
+
+        del fit_args_copy["metric"]
+        del fit_args_copy["x_noisy_train"]
+        del fit_args_copy["x_noisy_valid"]
+        del fit_args_copy["len_input_features"]
+        del fit_args_copy["bl_ratio"]
+        del fit_args_copy["nominator"]
+        del fit_args_copy["y_clean_valid"]
+        del fit_args_copy["y_clean_train"]
+
+        loss_inst = CustomLoss(model=self.model, metric=metric, 
+                               y_clean=y_clean_train, x_noisy=x_noisy_train,
+                               len_input_features=len_input_features, 
+                               bl_ratio=bl_ratio)
+
+        self.model.compile(optimizer=optimizer, 
+                           metrics=["mse", CustomMetric(model=self.model, y_clean=y_clean_valid, x_noisy=x_noisy_valid,
+                                                        len_input_features=len_input_features, 
+                                                        nominator=gx_dist, name="R")],
+                           loss=loss_inst)
 
 def loss_functions(loss_string):
     if loss_string == "mse":
@@ -429,7 +456,7 @@ class RandomForestModel(BaseModel):
 
     def save_model(self, model, path):
         with open(f"{path}/model.pkl", 'wb') as f:
-            pickle.dump(self.model, f)
+            pickle.dump(model, f)
 
     def load_model(self, filepath, model_obj):
         model = pickle.load(open(f'{filepath}/model.pkl', 'rb'))
