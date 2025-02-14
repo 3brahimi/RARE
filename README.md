@@ -26,7 +26,7 @@ pip install -r requirements.txt
 2. **Configuration**: Default configurations for a subset of equations are set in `config/equations`.
 Each equation has a single JSON file that defines the model type, training type, number of epochs, early stopping criteria, indices of target features for perturbation, and other relevant parameters.
 
-3. **Run the Main Script**: Execute the `main.py` script will perform the training process for a set of equations using MLP model with Mean Squared Error as the loss function.
+3. **Run the Main Script**: Execute the `main.py` script will perform the training process for the equation `I.6.2` using MLP model with Mean Squared Error as the loss function, and for both trainin types: clean and noise-aware. 
 
 ```bash
 python main.py
@@ -36,7 +36,12 @@ To train the same equations using MLP and the regularized loss function `msep`:
 python main.py --loss_function=msep
 ```
 
-4. **View Results**: After running the main script, the results of the training, including metrics and model performance, will be saved in the specified output directory. You can analyze these results to understand the robustness of your models.
+4. **View Results**: After running the main script, the results of each training type, including metrics and model performance, will be saved in the specified output directory.
+You can analyze these results to understand the robustness of your models.
+The path ```./results_{equation}/loss_{loss_function}/{noise_type}/{model_type}/{training_type}``` will contain subdirectories for each equation, where ```{equation}``` is the name of the equation being evaluated. Each subdirectory will include:
+
+Robustness results for each model are in the folder ```./results_{equation}/loss_{loss_function}/{noise_type}/{model_type}/{training_type}/models_all/robustness```.
+You can use these files to further analyze the performance and robustness of your models.
 
 ## Generating the Full Set of Equations from AI-Feynman
 
