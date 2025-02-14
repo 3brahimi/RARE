@@ -40,8 +40,14 @@ def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_
         for idx_shape, x_noise_vector in enumerate(x_noisy):
             y_noise_vector = model.predict(x_noise_vector)             
             y_noisy_pred[idx_shape, :] = y_noise_vector.flatten()     
-                                
-        rm = metric.calculate_metric(x_clean, y_clean, x_hat=x_noisy, y_hat=y_noisy_pred, outer_dist=["Euclidean", "L1"], weights=weights[model_idx], path=f"{robustness_res_path}/model_{model_idx}/")
+
+        if np.min(x_clean) != np.max(x_clean) and np.min(y_clean) != np.max(y_clean):                              
+            rm = metric.calculate_metric(x_clean, y_clean, x_hat=x_noisy, y_hat=y_noisy_pred, outer_dist=["Euclidean", "L1"], weights=weights[model_idx], path=f"{robustness_res_path}/model_{model_idx}/")
+        else:
+            print("Skipping metric calculation due to identical min and max values in input or output.")
+            rm = None
+            rm = {"Output distance": 0}
+            
         r_all_models[f"model_{model_idx}"] = rm  
         try:
             with open(f"{model_i_robustness_folder}/robustness_values.txt", "w") as f:
