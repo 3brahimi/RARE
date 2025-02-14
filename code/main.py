@@ -14,7 +14,7 @@ from utils.dists import L2_distance
 from Metric.weights_estimation import estimate_weights
 
 
-def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_all, robustness_res_path):
+def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_all, robustness_res_path, weights):
     print("Evaluating robustness of models..")
     x_clean, y_clean = dataset_generator.generate_dataset()
     target_features = config["noisy_input_feats"]
@@ -24,8 +24,13 @@ def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_
 
     if not os.path.exists(robustness_res_path):
         os.makedirs(robustness_res_path)
+    training_type = config["training_type"]
+    num_inputs = dataset_generator.num_inputs
     
-    rm_all_models = {}
+    if training_type == "noise-aware":
+        x_noisy, input_shape = prepare_noisy_data(x_noisy=x_noisy, x_clean=x_clean, gx=None, num_inputs=num_inputs, data_gen=dataset_generator, metric=metric, stage="test")
+        
+    r_all_models = {}
     for model_idx, model in enumerate(models):
         model_i_robustness_folder = f"{robustness_res_path}/model_{model_idx}"
         if not os.path.exists(model_i_robustness_folder):
@@ -34,16 +39,47 @@ def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_
         y_noisy_pred = y_noisy
         for idx_shape, x_noise_vector in enumerate(x_noisy):
             y_noise_vector = model.predict(x_noise_vector)             
-            y_noisy_pred[idx_shape, :] = y_noise_vector.flatten()
-            
-        rm = metric.calculate_metric(x_clean, y_clean, x_hat=x_noisy, y_hat=y_noisy_pred, outer_dist=["Euclidean", "L1"], path=f"{robustness_res_path}/model_{model_idx}/")
-        rm_all_models[f"model_{model_idx}"] = rm  
+            y_noisy_pred[idx_shape, :] = y_noise_vector.flatten()     
+                                
+        rm = metric.calculate_metric(x_clean, y_clean, x_hat=x_noisy, y_hat=y_noisy_pred, outer_dist=["Euclidean", "L1"], weights=weights[model_idx], path=f"{robustness_res_path}/model_{model_idx}/")
+        r_all_models[f"model_{model_idx}"] = rm  
         try:
             with open(f"{model_i_robustness_folder}/robustness_values.txt", "w") as f:
-                json.dump(rm_all_models, f, indent=4)
+                json.dump(rm, f, indent=4)
         except Exception as e:
-            print(f"Error writing to file {model_i_robustness_folder}/rm_values_all_models.txt: {e}")
+            print(f"Error writing to file {model_i_robustness_folder}/robustness_values.txt: {e}")
 
+def prepare_noisy_data(x_noisy, x_clean, gx, num_inputs, data_gen, metric, stage="train"):
+    if stage == "train":
+        x_noisy, input_shape = _prepare_noisy_data_train(x_noisy, x_clean, gx, num_inputs)
+    else:
+        x_noisy, input_shape = _prepare_noisy_data_test(x_noisy, x_clean, metric, data_gen)
+    return x_noisy, input_shape
+    
+def _prepare_noisy_data_train(x_noisy, x_clean, gx, num_inputs):
+    x_noisy = np.tile(x_noisy, (1, 1, 2))
+    # x_noisy[:, :, num_inputs:] = 0
+    x_noisy[:, :, num_inputs:] = x_clean
+    x_noisy[:, :, num_inputs:2*num_inputs] = gx
+    input_shape = num_inputs * 2
+
+    return x_noisy, input_shape
+
+def _prepare_noisy_data_test(x_noisy, x_clean, metric, data_gen):
+    # extract the significant patterns
+    gx = np.zeros((data_gen.num_samples, data_gen.num_inputs))
+    for idx_shape in range(x_noisy.shape[2]):
+        gx_temp = metric.extract_g(x_clean[:, idx_shape], x_hat=x_noisy[:, :, idx_shape])
+        gx[:, idx_shape] = gx_temp
+    # add the significant patterns to the input
+    x_noisy_new = np.zeros((x_noisy.shape[0], x_noisy.shape[1], x_noisy.shape[2] * 2))
+    for idx_shape in range(x_noisy.shape[2]):
+        x_noisy_new[:, :, idx_shape] = x_noisy[:, :, idx_shape]
+        x_noisy_new[:, :, idx_shape + x_noisy.shape[2]] = gx[:, idx_shape]
+    x_noisy = x_noisy_new
+    input_shape = x_noisy.shape[2]
+    return x_noisy, input_shape
+    
 def main(res_folder, json_file, loss_function, noise_type):
 
     with open(json_file) as f:
@@ -68,13 +104,26 @@ def main(res_folder, json_file, loss_function, noise_type):
     metric = RobustnessMetric()
     no_noisy_tests = 1
     random_seeds_all = [np.linspace(0, 1000, num_inputs, dtype=int) for _ in range(no_noisy_tests)]
-
+    models_num = 2
+    
     for config in configs["models"]:
+        # reset config values for each model
+        training_type = config["training_type"]
+        input_features = configs["features"]
+        num_inputs = len(input_features)
+        input_shape = num_inputs
         xy_train, xy_valid, xy_test, xy_noisy, xy_clean, gx_gy, indices = dataset_generator.split(config, metric_instance=metric)       
-        # Extract noisy and clean data
-        x_noisy, y_noisy = xy_noisy
-        x_clean, y_clean = xy_clean
         
+        if training_type == "noise-aware":
+            x_noisy, input_shape = prepare_noisy_data(xy_noisy[0], xy_clean[0], gx_gy[0], num_inputs, dataset_generator, metric, stage="train")
+        else:
+            x_noisy = xy_noisy[0]
+            input_shape = num_inputs
+        y_noisy = xy_noisy[1]    
+        # Extract noisy and clean data
+        # x_noisy, y_noisy = xy_noisy
+        x_clean, y_clean = xy_clean
+                
         # Extract gradient information
         gx, gx_y = gx_gy
         
@@ -95,7 +144,7 @@ def main(res_folder, json_file, loss_function, noise_type):
         
         
         # Calculate the baseline metric and weights
-        bl_denominator, bl_weights = calculate_baseline_metric(dataset_generator, metric, x_clean_train, y_clean_train, x_noisy_train, y_noisy_train, input_features, res_folder)
+        bl_denominator, bl_weights = calculate_baseline_metric(dataset_generator, metric, x_clean_train, y_clean_train, x_noisy_train, y_noisy_train, input_features, training_type, res_folder)
         print(f"Baseline denominator: {bl_denominator}", bl_weights)
         
         ############################# calculate the nominator of the metric in case of custom loss
@@ -104,6 +153,9 @@ def main(res_folder, json_file, loss_function, noise_type):
             gx = metric.extract_g(x_clean_valid[:, i], x_hat=x_noisy_valid[:, :, i])
             gx, x_clean_valid_i_scaled = metric.rescale_vector(true=x_clean_valid[:, i], noisy=gx)
             gxs_dists.append(L2_distance(gx, x_clean_valid_i_scaled, type="overall"))
+
+        if training_type == "noise-aware":
+            gxs_dists = np.append(gxs_dists, np.zeros(len(gxs_dists)))
 
         # multiply each gx by the corresponding weight
         gxs_dists = gxs_dists * bl_weights
@@ -119,7 +171,7 @@ def main(res_folder, json_file, loss_function, noise_type):
             # change epsilon and loss function in model_path according to eps and loss_function values: /home/qamar/workspace/crml/code/results_I_27_6/loss_custom_loss/laplace_dp/epsilon_0.1/linear/clean/models_all
             models = []
             losses = np.loadtxt(f"{models_path}/losses.txt")                
-            for i in range(2):
+            for i in range(models_num):
                 model_path_i = f"{models_path}/model_{i+1}"
                 print(model_path_i)
                 print("input_shape", input_shape)
@@ -150,16 +202,20 @@ def main(res_folder, json_file, loss_function, noise_type):
                 config["fit_args"]["y_clean_train"] = tf.convert_to_tensor(y_clean_train, dtype=tf.float64)
             
             # train multiple models
-            models_num = 10
             for i in range(models_num):
+                model_path_i = f"{models_folder}/model_{i+1}"
                 if not os.path.exists(models_folder):
                     os.makedirs(models_folder)
+                if os.path.exists(model_path_i):
+                    print(f"model_{i+1} already exists, loading the model..")
+                    # load the model
+                    model = trainer.model
+                    model.compile(optimizer='adam', loss=loss_function)
+                    model.load_weights(f"{model_path_i}/model_weights.h5")
                 else:
-                    if os.path.exists(f"{models_folder}/model_{i+1}"):
-                        print(f"model_{i+1} already exists")
-                        continue
-                
-                model, history = trainer.compile_and_fit(xy_train=xy_train, xy_valid=xy_valid, fit_args=config["fit_args"])     
+                    if not os.path.exists(model_path_i):
+                        os.makedirs(model_path_i)
+                    model, history = trainer.compile_and_fit(xy_train=xy_train, xy_valid=xy_valid, fit_args=config["fit_args"])
                 models.append(model)
                 # save the results
                 if history is not None:
@@ -202,12 +258,35 @@ def main(res_folder, json_file, loss_function, noise_type):
             
         # evaluate models robustness
         test_dataset_generator = DatasetGenerator(equation_str, test_noise_model, input_features, num_samples=x_len)   
+
+        # Maybe this part can be done inside the loop: or is it better to do it outside the loop?
+        models_weights = [[0 for _ in range(num_inputs)] for _ in range(models_num)]
         
-        # models_robustness_folder = f"{res_folder}/{config['type']}/{config['training_type']}/robustness"
+        for i in range(models_num):
+            model_path_i = f"{models_folder}/model_{i+1}"                               
+            if training_type == "noise-aware":
+                test_dataset_generator.num_inputs = num_inputs
+                if loss_function == "msep":
+                    weights = estimate_weights(f"{model_path_i}", input_features, test_dataset_generator, training_type="noise-aware", num_samples=x_len, loss_function=loss_function, metric=metric, 
+                                               x_noisy=x_noisy_train, len_input_features=input_shape, bl_ratio=bl_denominator, y_clean=y_clean_train, model_type=config['type'])
+                else:
+                    weights = estimate_weights(f"{model_path_i}", input_features, test_dataset_generator, training_type="noise-aware", num_samples=x_len, loss_function=loss_function, model_type=config['type'])
+            else:
+                if loss_function == "msep":
+                    weights = estimate_weights(f"{model_path_i}", input_features, test_dataset_generator, num_samples=x_len, loss_function=loss_function, metric=metric, x_noisy=x_noisy, len_input_features=input_shape, bl_ratio=bl_denominator, nominator=gxs_dists, y_clean=y_clean, model_type=config['type'])
+                else:
+                    weights = estimate_weights(f"{model_path_i}", input_features,test_dataset_generator, num_samples=x_len, model_type=config['type'])
+            # if all weights are 0, then we use the correct weights
+            if np.all(weights == 0):
+                weights = bl_weights
+            weights = bl_weights
+            models_weights[i] = weights
+            # then we pass the models_weights to the evaluate_robustness function
+        
         models_robustness_folder = f"{models_folder}/robustness"
         if not os.path.exists(models_robustness_folder):
             os.makedirs(models_robustness_folder)
-        evaluate_robustness(models, test_dataset_generator, config, metric, random_seeds_all, models_robustness_folder)
+        evaluate_robustness(models, test_dataset_generator, config, metric, random_seeds_all, models_robustness_folder, models_weights)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run robustness testing and training.")

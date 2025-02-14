@@ -9,7 +9,22 @@
             "training_type": "clean",
             "fit_args": {
                 "epochs": 600,
-                "early_stopping": 40
+                "early_stopping": 10
+            },
+            "noisy_input_feats": [
+                0,
+                1
+            ],
+            "extended_data": false
+        },
+        {
+            "type": "linear",
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 10,
+                "early_stopping": 10
             },
             "noisy_input_feats": [
                 0,

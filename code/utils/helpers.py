@@ -262,7 +262,7 @@ def evaluate_and_plot(model, history, xy_test, path="./"):
         plt.savefig(f"{path}/loss_history.png", bbox_inches='tight', dpi=300)
         
         
-def calculate_baseline_metric(dataset_generator, metric, x_clean, y_clean, x_noisy, y_noisy, input_features, res_folder):
+def calculate_baseline_metric(dataset_generator, metric, x_clean, y_clean, x_noisy, y_noisy, input_features, training_type, res_folder):
     
     y_noisy_bl = np.zeros((y_noisy.shape[0], y_noisy.shape[1]))
     for idx_shape, x_noise_vector in enumerate(x_noisy):
@@ -272,7 +272,9 @@ def calculate_baseline_metric(dataset_generator, metric, x_clean, y_clean, x_noi
     outer_dists = ["Euclidean"]
     correct_weights = estimate_weights(model_path=f"{res_folder}/baseline/", inputs=input_features, dataset_generator=dataset_generator,
                                        num_samples=1000, model_type="expression")
-    
+    if training_type == "noise-aware":
+        correct_weights = np.append(correct_weights, np.zeros(len(correct_weights)))
+
     rm_bl_train = metric.calculate_metric(x_clean, y_clean, 
                                           x_hat=x_noisy, y_hat=y_noisy_bl,
                                           outer_dist=outer_dists, weights=correct_weights, path=f"{res_folder}/baseline/training")["Euclidean"]
