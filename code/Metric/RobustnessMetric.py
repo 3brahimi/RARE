@@ -229,10 +229,8 @@ class RobustnessMetric:
     
     # rescale x and y to be between 0 and 1 according to the min and max values of the two vectors
     def rescale_vector(self, true, noisy):
-        # min_val = min(np.min(x), np.min(y))
         min_val = np.min(true)
         max_val = np.max(true)
-        print("min_val", min_val, "max_val", max_val)
         if min_val == max_val:
             # retutn an error
             raise ValueError("The min and max values of the input and the output are the same", true, noisy) 
@@ -245,36 +243,15 @@ class RobustnessMetric:
         type = kwargs.get("type")
         results = {}
         for d in dist:
-            # print("Calculating the ratio for distance:", d)
             for i in range(len(g_input)):
                 x = true_input[:, i] if len(true_input.shape) > 1 else true_input
                 gx = g_input[i]
                 x, gx = self.rescale_vector(true=x, noisy=gx)
-                # temp = self.calculate_dist(x, g_input[i], d, type=type)
                 temp = self.calculate_dist(x, gx, d, type=type)
                 dx = temp * weights[0] if i == 0 else dx + (temp * weights[i])
-                # plt.figure(figsize=(6,6))
-                # x_sort_index = np.argsort(x)
-                
-                # plt.plot(x[x_sort_index], x[x_sort_index], label="x")
-                # plt.plot(x[x_sort_index], gx[x_sort_index], label="G(x)")
-                # plt.xlabel("index", fontsize=18)
-                # plt.ylabel("Y", fontsize=18)
-                # plt.legend(prop={'size': 14}, shadow=True, fontsize=14)
-                # plt.savefig(f"./{d}_input_feature_{i}.png", bbox_inches='tight')
-                # print("length of x", len(x))
-            # dy = self.calculate_dist(true_output, g_output, d, type=type)
             
             true_y, gy = self.rescale_vector(true=true_output, noisy=g_output)
             
-            # plt.figure(figsize=(6,6))
-            # size = len(true_y)
-            # plt.plot(np.linspace(0, size, size), true_y[0:size], label="True output")
-            # plt.plot(np.linspace(0, size, size), gy[0:size], label="G output")
-            # plt.xlabel("index", fontsize=18)
-            # plt.ylabel("$Y$", fontsize=18)
-            # plt.legend(prop={'size': 14}, shadow=True, fontsize=14)
-            # plt.savefig(f"./{d}_output.png", bbox_inches='tight')
             
             dy = self.calculate_dist(true_y, gy, d, type=type)
             results[d] = {
@@ -384,8 +361,6 @@ class RobustnessMetric:
             if x_hat is not None and y_hat is not None:
                 x_bounds_feat = self.extract_bounds(x_hat)
                 y_bounds = self.extract_bounds(y_hat)
-            # min_input_bound, max_input_bound = calculations.min_max_bounds(x_hat)
-            # x_dists = self.bounds_distance(x, (x_bounds[0], x_bounds[1]), inner_dist)
             sort_idx = np.argsort(x)
             x_sorted = x[sort_idx]
             x_bounds_feat_max = x_bounds_feat[0][sort_idx]
@@ -400,7 +375,6 @@ class RobustnessMetric:
             gxs.append(gx["G"])
         
         y_dists = self.bounds_distance(y, (y_bounds[0], y_bounds[1]), inner_dist)
-        # y_dists = self.bounds_distance(y_sorted, (y_bounds_max, y_bounds_min), inner_dist)
         y_dists_agg = self.aggregate_Q(y_dists, Q)
         y_dists_max = y_dists[0]
         y_dists_min = y_dists[1]
@@ -414,12 +388,9 @@ class RobustnessMetric:
             y_bounds_max = y_bounds[0][y_sort_idx]
             y_bounds_min = y_bounds[1][y_sort_idx]
 
-            # self.plot_G(x=np.linspace(0, len(y), len(y)), true_sloution=y_sorted, distances_array=gy["G_distances"], dist_max=y_dists_max, dist_min=y_dists_min, x_max=y_bounds_max, x_min=y_bounds_min, vis=False, save=True, fig_name=f"G for output", path=f"{path}/G_output")
             self.plot_G(x=np.linspace(0, len(y), len(y)), true_sloution=y, distances_array=gy["G_distances"], dist_max=y_dists_max, dist_min=y_dists_min, x_max=y_bounds[0], x_min=y_bounds[1], vis=False, save=True, fig_name=f"G for output", path=f"{path}/G_output")
-        # robustness = self.metric_ratio(x, gx["G"], y, gy["G"], outer_dist, type="overall")
 
         robustness = self.metric_ratio(true_input=x, g_input=gxs, g_output=gy["G"], true_output=y, dist=outer_dist, type="overall", weights=weights)
-        # robustness = self.metric_ratio(x_sorted, gxs, gy["G"], y_sorted, dist=outer_dist, type="overall", weights=weights)
         if tf.is_tensor(x):
             # return the robustness as a tensor
             return tf.convert_to_tensor(robustness)
