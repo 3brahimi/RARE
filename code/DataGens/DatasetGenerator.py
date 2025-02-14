@@ -59,11 +59,7 @@ class DatasetGenerator:
             # step = (val["range"][1] - val["range"][0]) / (self.num_samples * 100)
             step = (val["range"][1] - val["range"][0]) / (self.num_samples)
             
-            # values = np.arange(val["range"][0], val["range"][1], step)
             x = np.linspace(val["range"][0], val["range"][1], self.num_samples)
-            # x = random.sample(list(values), self.num_samples)
-            # x = np.random.choice(np.arange(val["range"][0], val["range"][1]), size=self.num_samples, replace=False)
-            # x = np.sort(x)
             x_clean = x if i == 0 else np.vstack((x_clean, x))
         
         # uncomment this to use SALib to generate the input data
@@ -87,8 +83,6 @@ class DatasetGenerator:
         # self.noise_generator.num_samples = self.num_samples
         # # Generate clean output data according to the specified equation
         if self.num_inputs == 1:
-            # x_clean = x_clean.T
-            # reshape it to be (num_samples, 1)
             x_clean = x_clean.reshape(-1, 1)
             y_clean = self.equation(x_clean).flatten()
         else:
@@ -551,28 +545,6 @@ class DatasetGenerator:
             x_noisy_sample = x_noisy_sample.reshape(x_noisy_sample.shape[0], -1)
             x_noisy_new[idx, :, :] = x_noisy_sample.T
         return x_noisy_new, y_noisy
-    
-    def split_multi_outputs(self, config, equations):
-        """
-        split function but for multiple outputs
-        
-        """
-        target_feat_idx = config['noisy_input_feats']
-        # Generate clean dataset
-        y_clean = np.zeros((self.num_samples, len(equations)))
-        for i, equation_str in enumerate(equations):
-            x_clean, y_temp = self.generate_dataset(equation_str)
-            # shape of clean data is (num_samples, num_inputs/features)
-
-            y_temp = y_temp.ravel()
-            y_clean[:, i] = y_temp
-        
-        x_train_clean, x_temp_clean, y_train_clean, y_temp_clean = train_test_split(x_clean, y_clean, test_size=0.1, random_state=42)
-        x_train, y_train = get_data(config['training'], x_train_clean, y_train_clean, None, None)
-        x_valid, y_valid = get_data(config['validation'], x_temp_clean, y_temp_clean, None, None)
-        x_test, y_test = get_data(config['testing'], x_temp_clean, y_temp_clean, None, None)
-
-        return (x_train, y_train), (x_valid, y_valid), (x_test, y_test)
             
     def set_equation(self, equation_str):
         self.equation, self.num_inputs = self.make_equation(equation_str)

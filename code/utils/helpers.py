@@ -44,31 +44,11 @@ def get_data_from_dict(config, x_clean, y_clean, gx, gx_y):
     x_test (ndarray): The concatenated x data for testing.
     y_test (ndarray): The concatenated y data for testing.
     """
-    # copy the config dictionary to avoid changing the original one
     data_dict = config.copy()
-   
-   
-    # add indices column to x_clean, so that we can know which indices were used for training, validation, and testing
     indices = np.arange(x_clean.shape[0])
-    
-        
-    # x_train, x_temp, y_train, y_temp = train_test_split(x_clean, y_clean, test_size=0.2, random_state=42, shuffle=False)
     indices_train, indices_temp, x_train, x_temp, y_train, y_temp = train_test_split(indices, x_clean, y_clean, test_size=0.2, random_state=42)
-    
-    # Split the temporary set into validation and testing sets
-    # x_valid, x_test, y_valid, y_test = train_test_split(x_temp, y_temp, test_size=0.5, random_state=42, shuffle=False
-    # )
     indices_valid, indices_test, x_valid, x_test, y_valid, y_test = train_test_split(indices_temp, x_temp, y_temp, test_size=0.5, random_state=42)
-    
-    # ####### no shuffle split     
-    # x_train, x_temp, y_train, y_temp = train_test_split(x_clean, y_clean, test_size=0.2, random_state=42, shuffle=False)
-    # # Split the temporary set into validation and testing sets
-    # x_valid, x_test, y_valid, y_test = train_test_split(x_temp, y_temp, test_size=0.5, random_state=42, shuffle=False)
-
-    ###### the following split is for the old code with get_data, the last three commented lines in this function
-    # x_train_clean, x_temp_clean, y_train_clean, y_temp_clean = train_test_split(x_clean, y_clean, test_size=0.1, random_state=42, shuffle=False)
-    # print("x_train_clean shape is", x_train_clean.shape, "y_train_clean shape is", y_train_clean.shape, "x_valid shape is", x_valid.shape, "y_valid shape is", y_valid.shape, "x_test shape is", x_test.shape, "y_test shape is", y_test.shape)
-    
+   
     # if training contains gx, then add it as a new feature column for training dataset
           # remove gx from all elements of the dictionary
     for key in data_dict:
@@ -96,11 +76,6 @@ def get_data_from_dict(config, x_clean, y_clean, gx, gx_y):
             gx_train, gx_temp, gy_train, gy_temp = train_test_split(gx, gx_y, test_size=0.2, random_state=42)
             gx_valid, gx_test, gy_valid, gy_test = train_test_split(gx_temp, gy_temp, test_size=0.5, random_state=42)
  
-    # x_train, y_train = get_data(data_dict['training'], x_train_clean, y_train_clean, gx_train, gy_train)
-
-    # x_valid, y_valid = get_data(data_dict['validation'], x_temp_clean, y_temp_clean, gx_valid, gy_valid)
-
-    # x_test, y_test = get_data(data_dict['testing'], x_temp_clean, y_temp_clean, gx_test, gy_test)
     return x_train, y_train, x_valid, y_valid, x_test, y_test
 
 def noise_aware_data(config, x_clean, y_clean, gx, gx_y):
@@ -127,38 +102,22 @@ def noise_aware_data(config, x_clean, y_clean, gx, gx_y):
    
     indices_valid, indices_test, x_valid, x_test, y_valid, y_test = train_test_split(indices_temp, x_temp, y_temp, test_size=0.5, random_state=42, shuffle=True)
    
-    # ####### no shuffle split     
-    # x_train, x_temp, y_train, y_temp = train_test_split(x_clean, y_clean, test_size=0.2, random_state=42, shuffle=False)
-    # # Split the temporary set into validation and testing sets
-    # x_valid, x_test, y_valid, y_test = train_test_split(x_temp, y_temp, test_size=0.5, random_state=42, shuffle=False)
-
-    
-    # # creat gx_training, which is gx with the same length as x_train, and zeros for another training size
-    # gx_train = np.concatenate((gx[indices_train], np.zeros((x_train.shape[0], gx.shape[1]))), axis=0)
-    
+ 
     # copy x instead of zeros
     gx_train = np.concatenate((gx[indices_train], x_clean[indices_train]), axis=0)
     x_train_new = np.concatenate((x_train, x_train), axis=0)
     
     x_train = np.concatenate((x_train_new, gx_train), axis=1)
    
-    # ## also gx_train - x_train as a new feature
-    # dist_gx_x_train = gx_train - x_train_new
-    # x_train = np.concatenate((x_train_new, gx_train, dist_gx_x_train), axis=1)
- 
-       
     # repeat y_train as well
     y_train = np.concatenate((y_train, y_train), axis=0)
 
     # for the validation set, add new column feature for gx only with values 0
     # gx_valid = np.zeros((x_valid.shape[0], gx.shape[1]))
     
-    #  valid on clean data not zeros 
     gx_valid = x_valid
-    # gx_valid = np.zeros((x_valid.shape[0], gx.shape[1]))
-    # dist_gx_x_valid = gx_valid - x_valid
+    
     x_valid = np.concatenate((x_valid, gx_valid), axis=1)
-    # x_valid = np.concatenate((x_valid, gx_valid, dist_gx_x_valid), axis=1)
     
     # append the last values of gx to the test set, from the end back the length of x_test
     dist_gx_x_test = gx[indices_test] - x_test
