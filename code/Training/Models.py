@@ -260,11 +260,17 @@ class LinearModel(BaseModel):
     
             if self.loss_function == "msep":
                 self._compile_custom_loss(fit_args_copy, optimizer)
+                early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_mse', patience=fit_args_copy["early_stopping"])
+
             else:
                 self.model.compile(optimizer=optimizer, loss=self.loss_function)
     
             fit_args_copy["callbacks"] = [early_stopping]
-            fit_args_new = {key: value for key, value in fit_args_copy.items() if key != 'early_stopping'}
+            fit_args_new = {}
+            for key, value in fit_args_copy.items():
+                if key == 'early_stopping':
+                    continue
+                fit_args_new[key] = value
     
             history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=2, **fit_args_new)
     
@@ -380,12 +386,17 @@ class CNNModel(BaseModel):
 
         if self.loss_function == "msep":
             self._compile_custom_loss(fit_args_copy, optimizer)
+            early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_mse', patience=fit_args_copy["early_stopping"])
+
         else:
             self.model.compile(optimizer=optimizer, loss=self.loss_function)
 
         fit_args_copy["callbacks"] = [early_stopping]
-        fit_args_new = {key: value for key, value in fit_args_copy.items() if key != 'early_stopping'}
-
+        fit_args_new = {}
+        for key, value in fit_args_copy.items():
+            if key == 'early_stopping':
+                continue
+            fit_args_new[key] = value
         history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=2, **fit_args_new)
 
         return self.model, history
