@@ -114,7 +114,7 @@ def main(res_folder, json_file, loss_function, noise_type):
     metric = RobustnessMetric()
     no_noisy_tests = 1
     random_seeds_all = [np.linspace(0, 1000, num_inputs, dtype=int) for _ in range(no_noisy_tests)]
-    models_num = 2
+    models_num = 10
     
     for config in configs["models"]:
         # reset config values for each model
@@ -312,14 +312,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     eqs_json_files = {
-        # "I_6_2a.json",
-        # "I_14_3.json",
+        "I_6_2a.json",
+        "I_14_3.json",
         "I_6_2b.json",
-        # "IV_1.json",
-        # "IV_2.json",
-        # "IV_6.json",
-        # "IV_8.json",
-        # "IV_10.json",
+        "IV_1.json",
+        "IV_2.json",
+        "IV_6.json",
+        "IV_8.json",
+        "IV_10.json",
         
     }
     
