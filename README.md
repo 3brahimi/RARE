@@ -22,6 +22,7 @@ The code generates datasets with noise, trains models, and evaluates their robus
 ```bash
 cd code
 conda create --name robutt python=3.10
+conda activate robutt
 pip install -r requirements.txt
 ```
 2. **Configuration**: Default configurations for a subset of equations are set in `config/equations`.
