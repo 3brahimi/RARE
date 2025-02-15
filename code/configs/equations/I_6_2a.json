@@ -1,41 +1,32 @@
 {
-    "equation": "q1*q2*r/(4*pi*epsilon*r**3)",
-    "num_samples": 10,
+    "equation": "exp(-theta**2/2)/sqrt(2*pi)",
+    "num_samples":1000,
     "models": [
-       
         {
             "type": "linear",
             "model_path": "clean",
             "load": false,
             "training_type": "clean",
             "fit_args": {
-                "epochs": 4000,
+                "epochs": 2000,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [
+                0
+            ],
+            "extended_data": false
+        },
+        {
+            "type": "linear",
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 2000,
                 "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3
-            ],
-            "extended_data":false,
-            "sampling_rate": 3
-
-        },
-        {
-            "type": "linear",
-            "model_path": "noise-aware",
-            "load": false,
-            "training_type": "noise-aware",
-            "fit_args": {
-                "epochs": 4000,
-                "early_stopping": 10
-            },
-            "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3
+                0
             ],
             "extended_data": false
         },
@@ -45,14 +36,11 @@
             "load": false,
             "training_type": "clean",
             "fit_args": {
-                "epochs": 4000,
-                "early_stopping": 10
+                "epochs": 400,
+                "early_stopping": 20
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3
+                0
             ],
             "extended_data": false
         },
@@ -62,45 +50,22 @@
             "load": false,
             "training_type": "noise-aware",
             "fit_args": {
-                "epochs": 4000,
-                "early_stopping": 10
+                "epochs": 400,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3            
+                0
             ],
             "extended_data": false
         }
+        
     ],
     "features": {
-        "q1": {
+        "theta": {
             "type": "float",
             "range": [
                 1.0,
-                5.0
-            ]
-        },
-        "q2": {
-            "type": "float",
-            "range": [
-                1.0,
-                5.0
-            ]
-        },
-        "epsilon": {
-            "type": "float",
-            "range": [
-                1.0,
-                5.0
-            ]
-        },
-        "r": {
-            "type": "float",
-            "range": [
-                1.0,
-                5.0
+                3.0
             ]
         }
     }

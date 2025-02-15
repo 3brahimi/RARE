@@ -234,15 +234,14 @@ def calculate_baseline_metric(dataset_generator, metric, x_clean, y_clean, x_noi
     if training_type == "noise-aware":
         correct_weights = np.append(correct_weights, np.zeros(len(correct_weights)))
 
-    if np.min(x_clean) != np.max(x_clean) and np.min(y_clean) != np.max(y_clean):
-        
+    if np.min(x_clean) != np.max(x_clean) and np.min(y_clean) != np.max(y_clean):       
         rm_bl_train = metric.calculate_metric(x_clean, y_clean, 
                                           x_hat=x_noisy, y_hat=y_noisy_bl,
                                           outer_dist=outer_dists, weights=correct_weights, path=f"{res_folder}/baseline/training")["Euclidean"]
     else:
         print("Skipping metric calculation due to identical min and max values in input or output.")
-        rm_bl_train = None
-        rm_bl_train = {"Output distance": 0}
+        rm_bl_train = 1
+        rm_bl_train = {"Output distance": 1}
     with open(f"{res_folder}/baseline/training/rm.txt", "w") as outfile:
         outfile.write(str(rm_bl_train))
     

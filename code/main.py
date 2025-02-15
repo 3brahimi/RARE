@@ -45,8 +45,8 @@ def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_
             rm = metric.calculate_metric(x_clean, y_clean, x_hat=x_noisy, y_hat=y_noisy_pred, outer_dist=["Euclidean", "L1"], weights=weights[model_idx], path=f"{robustness_res_path}/model_{model_idx}/")
         else:
             print("Skipping metric calculation due to identical min and max values in input or output.")
-            rm = None
-            rm = {"Output distance": 0}
+            rm = 1
+            rm = {"Output distance": 1}
             
         r_all_models[f"model_{model_idx}"] = rm  
         try:
@@ -148,9 +148,13 @@ def main(res_folder, json_file, loss_function, noise_type):
         y_clean_train = y_clean[indices_train,]
         y_clean_valid = y_clean[indices_valid,]
         
+        if np.min(x_clean) != np.max(x_clean) and np.min(y_clean) != np.max(y_clean):
         
-        # Calculate the baseline metric and weights
-        bl_denominator, bl_weights = calculate_baseline_metric(dataset_generator, metric, x_clean_train, y_clean_train, x_noisy_train, y_noisy_train, input_features, training_type, res_folder)
+            # Calculate the baseline metric and weights
+            bl_denominator, bl_weights = calculate_baseline_metric(dataset_generator, metric, x_clean_train, y_clean_train, x_noisy_train, y_noisy_train, input_features, training_type, res_folder)
+        else:
+            print("Skipping baseline metric calculation due to identical min and max values in input or output.")
+            bl_denominator = 1
         print(f"Baseline denominator: {bl_denominator}", bl_weights)
         
         ############################# calculate the nominator of the metric in case of custom loss
@@ -304,7 +308,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     eqs_json_files = {
-        "I_6_2b.json"
+        "I_6_2a.json",
+        "I_14_3.json",
+        "I_6_2b.json",
+        "IV_1.json",
+        "IV_2.json",
+        "IV_6.json",
+        "IV_8.json",
+        "IV_10.json",
+        
     }
     
     for json_file in eqs_json_files:

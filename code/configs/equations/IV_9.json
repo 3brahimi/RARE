@@ -1,6 +1,6 @@
 {
-    "equation": "exp(-((theta-theta1)/sigma)**2/2)/(sqrt(2*pi)*sigma)",
-    "num_samples": 32,
+    "equation": "x**2 + sin(2*pi*y)",
+    "num_samples":32,
     "models": [
         {
             "type": "linear",
@@ -8,15 +8,14 @@
             "load": false,
             "training_type": "clean",
             "fit_args": {
-                "epochs": 1,
-                "early_stopping": 10
+                "epochs": 10000,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2
+                0
             ],
-        "extended_data": false
+            "extended_data":false,
+            "sampling_rate": 1
         },
         {
             "type": "linear",
@@ -24,15 +23,14 @@
             "load": false,
             "training_type": "noise-aware",
             "fit_args": {
-                "epochs": 1,
-                "early_stopping": 10
+                "epochs": 10000,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2
+                0
             ],
-            "extended_data": false
+            "extended_data":false,
+            "sampling_rate": 1
         },
         {
             "type": "cnn",
@@ -40,15 +38,14 @@
             "load": false,
             "training_type": "clean",
             "fit_args": {
-                "epochs": 1,
-                "early_stopping": 10
+                "epochs": 10000,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2
+                0
             ],
-            "extended_data": false
+            "extended_data":false,
+            "sampling_rate": 1
         },
         {
             "type": "cnn",
@@ -56,38 +53,30 @@
             "load": false,
             "training_type": "noise-aware",
             "fit_args": {
-                "epochs": 1,
-                "early_stopping": 10
+                "epochs": 10000,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2
+                0
             ],
-            "extended_data": false
+            "extended_data":false,
+            "sampling_rate": 1
         }
     ],
     "features": {
-        "sigma": {
+        "x": {
             "type": "float",
             "range": [
-                1.0,
-                3.0
+                -1,
+                1
             ]
         },
-        "theta": {
+        "y": {
             "type": "float",
             "range": [
-                1.0,
-                3.0
+                -1,
+                1
             ]
-        },
-        "theta1": {
-            "type": "float",
-            "range": [
-                1.0,
-                3.0
-            ]
-        }
     }
+}
 }

@@ -1,6 +1,6 @@
 {
-    "equation": "q1/(4*pi*epsilon*r**2)",
-    "num_samples": 32,
+    "equation": "exp(-x)",
+    "num_samples":256,
     "models": [
         {
             "type": "linear",
@@ -8,16 +8,14 @@
             "load": false,
             "training_type": "clean",
             "fit_args": {
-                "epochs": 400,
-                "early_stopping": 40
+                "epochs": 10000,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3
+                0
             ],
-            "extended_data":false
+            "extended_data":false,
+            "sampling_rate": 1
         },
         {
             "type": "linear",
@@ -25,16 +23,14 @@
             "load": false,
             "training_type": "noise-aware",
             "fit_args": {
-                "epochs": 400,
-                "early_stopping": 10
+                "epochs": 10000,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3
+                0
             ],
-            "extended_data": false
+            "extended_data":false,
+            "sampling_rate": 1
         },
         {
             "type": "cnn",
@@ -42,16 +38,14 @@
             "load": false,
             "training_type": "clean",
             "fit_args": {
-                "epochs": 400,
-                "early_stopping": 10
+                "epochs": 10000,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3
+                0
             ],
-            "extended_data": false
+            "extended_data":false,
+            "sampling_rate": 1
         },
         {
             "type": "cnn",
@@ -59,38 +53,22 @@
             "load": false,
             "training_type": "noise-aware",
             "fit_args": {
-                "epochs": 400,
-                "early_stopping": 10
+                "epochs": 10000,
+                "early_stopping": 100
             },
             "noisy_input_feats": [
-                0,
-                1,
-                2,
-                3
+                0
             ],
-            "extended_data": false
+            "extended_data":false,
+            "sampling_rate": 1
         }
     ],
     "features": {
-        "q1": {
+        "x": {
             "type": "float",
             "range": [
-                1.0,
-                5.0
-            ]
-        },
-        "epsilon": {
-            "type": "float",
-            "range": [
-                1.0,
-                5.0
-            ]
-        },
-        "r": {
-            "type": "float",
-            "range": [
-                1.0,
-                5.0
+                -1,
+                1
             ]
         }
     }

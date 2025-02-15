@@ -34,43 +34,41 @@ def estimate_weights(model_path, inputs, dataset_generator, training_type="clean
     }
     param_values = saltelli.sample(problem, 1000, calc_second_order=False)
     
+    model = None
     if training_type == "noise-aware":
         param_values[:, -len(inputs):] = 0
     
-    elif model_type == "expression":
+    if model_type == "expression":
         model = dataset_generator
-    else:
-        if loss_function == "custom_loss":
+    
+    elif loss_function == "msep":
             # read the custom loss parameters from kwargs
-            metric = kwargs["metric"]
-            x_noisy = kwargs["x_noisy"]
-            bl_ratio = kwargs["bl_ratio"]
-            y_clean = kwargs["y_clean"]
+        metric = kwargs["metric"]
+        x_noisy = kwargs["x_noisy"]
+        bl_ratio = kwargs["bl_ratio"]
+        y_clean = kwargs["y_clean"]
 
-            trainer = ModelTrainer().get_model(model_type, shape_input=len(input_feats)
-                                               , loss_function=loss_function)
-            model = trainer.model
-            customloss = CustomLoss(model=model, metric=metric, y_clean=y_clean, x_noisy=x_noisy, len_input_features=len(input_feats), bl_ratio=bl_ratio)
+        trainer = ModelTrainer().get_model(model_type, shape_input=len(input_feats)
+                                           , loss_function=loss_function)
+        model = trainer.model
+        customloss = CustomLoss(model=model, metric=metric, y_clean=y_clean, x_noisy=x_noisy, len_input_features=len(input_feats), bl_ratio=bl_ratio)
 
-            optimizer = keras.optimizers.Adam(learning_rate=0.001)
+        optimizer = keras.optimizers.Adam(learning_rate=0.001)
 
-            model.compile(optimizer='adam', loss=customloss)
-            model.load_weights(f"{model_path}/model_weights.h5")
-            # model = keras.models.load_model(model_path, compile=False)
+        model.compile(optimizer='adam', loss=customloss)
+        model.load_weights(f"{model_path}/model_weights.h5")
             
-            # customloss = CustomLoss(model=model, metric=metric, y_clean=y_clean, x_noisy=x_noisy, len_input_features=len_input_features, bl_ratio=bl_ratio, nominator=nominator)
-            # model.compile(optimizer='adam', loss=customloss)
+    else:
+            
+        trainer = ModelTrainer().get_model(model_type, shape_input=len(input_feats)
+                                           , loss_function=loss_function)
+        model = trainer.model
+        if model_type in ["LR", "RF"]:
+            model = trainer.load_model(model_path)
         else:
-            
-            trainer = ModelTrainer().get_model(model_type, shape_input=len(input_feats)
-                                               , loss_function=loss_function)
-            model = trainer.model
-            if model_type in ["LR", "RF"]:
-                model = trainer.load_model(model_path)
-            else:
-                optimizer = keras.optimizers.Adam(learning_rate=0.001)
-                model.compile(optimizer=optimizer, loss=loss_function)
-                model.load_weights(f"{model_path}/model_weights.h5")
+            optimizer = keras.optimizers.Adam(learning_rate=0.001)
+            model.compile(optimizer=optimizer, loss=loss_function)
+            model.load_weights(f"{model_path}/model_weights.h5")
             # model = keras.models.load_model(model_path)
     # param_values = np.reshape(param_values, (param_values.shape[0], len(new_inputs)))
 

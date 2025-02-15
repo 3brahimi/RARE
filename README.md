@@ -18,9 +18,10 @@ The code generates datasets with noise, trains models, and evaluates their robus
 
 ## Usage
 
-1. **Install requirements**: Install the requirements file using the command:
+1. **Install requirements**: Create a conda environment and install the requirements file using the command:
 ```bash
 cd code
+conda create --name robutt python=3.10
 pip install -r requirements.txt
 ```
 2. **Configuration**: Default configurations for a subset of equations are set in `config/equations`.

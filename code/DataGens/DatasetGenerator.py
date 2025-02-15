@@ -129,7 +129,7 @@ class DatasetGenerator:
         else:    
             for i in range(self.num_inputs):
                 if i in target_feat_idx:
-                    print("modulating noise for feature", i)
+                    print("Noise modulation for feature", i)
                     # Generate noise
                     noises = self.noise_generator.generate_noise(random_seed=random_seeds[i])
                     # Add noise to the clean input data
