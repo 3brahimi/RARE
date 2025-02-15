@@ -16,19 +16,25 @@ The code generates datasets with noise, trains models, and evaluates their robus
 ### Evaluation
 - **RobustnessMetric**: Calculates robustness metrics to evaluate the performance of models under noisy conditions.
 
-## Usage
-
-1. **Install requirements**: Create a conda environment and install the requirements file using the command:
+## Installation
+1. **Clone the repository**:
 ```bash
-cd code
+git clone https://github.com/3brahimi/RobuTT.git
+cd RobuTT/code
+```
+
+2. **Install requirements**: Create a conda environment and install the requirements file using the command:
+```bash
 conda create --name robutt python=3.10
 conda activate robutt
 pip install -r requirements.txt
 ```
-2. **Configuration**: Default configurations for a subset of equations are set in `config/equations`.
+## Usage
+
+1. **Configuration**: Default configurations for a subset of equations are set in `config/equations`.
 Each equation has a single JSON file that defines the model type, training type, number of epochs, early stopping criteria, indices of target features for perturbation, and other relevant parameters.
 
-3. **Run the Main Script**: Execute the `main.py` script will perform the training process for a set of equations from [AI-Feynman](https://space.mit.edu/home/tegmark/aifeynman.html) and [SDR-EQL](https://arxiv.org/pdf/1912.04825) using Linear(MLP) and CNN models with Mean Squared Error as the loss function, and for both trainin types: clean and noise-aware.
+2. **Run the Main Script**: Execute the `main.py` script will perform the training process for a set of equations from [AI-Feynman](https://space.mit.edu/home/tegmark/aifeynman.html) and [SDR-EQL](https://arxiv.org/pdf/1912.04825) using Linear(MLP) and CNN models with Mean Squared Error as the loss function, and for both trainin types: clean and noise-aware.
 
 ```bash
 python main.py
@@ -38,7 +44,7 @@ To train the same equations using MLP and the regularized loss function `msep`:
 python main.py --loss_function=msep
 ```
 
-4. **View Results**: After running the main script, the results of each training type, including metrics and model performance, will be saved in the specified output directory.
+3. **View Results**: After running the main script, the results of each training type, including metrics and model performance, will be saved in the specified output directory.
 You can analyze these results to understand the robustness of your models.
 The path ```./results_{equation}/loss_{loss_function}/{noise_type}/{model_type}/{training_type}``` will contain subdirectories for each equation, where ```{equation}``` is the name of the equation being evaluated. Each subdirectory will include:
 
