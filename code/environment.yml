@@ -1,0 +1,39 @@
+name: robutt
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10.16
+  - pip=25.0
+  - numpy=1.24.3
+  - pandas
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - tensorflow=2.13.1
+  - keras=2.13.1
+  - tensorboard=2.13.0
+  - pyod=2.0.3
+  - tqdm
+  - requests=2.32.3
+  - protobuf=4.25.6
+  - typing-extensions=4.5.0
+  - pip:
+      - cachetools==5.5.1
+      - certifi==2025.1.31
+      - charset-normalizer==3.4.1
+      - gast==0.4.0
+      - google-auth==2.38.0
+      - google-auth-oauthlib==1.0.0
+      - idna==3.10
+      - oauthlib==3.2.2
+      - pyasn1==0.6.1
+      - pyasn1-modules==0.4.1
+      - pyparsing==3.2.1
+      - pytz==2025.1
+      - requests-oauthlib==2.0.0
+      - rsa==4.9
+      - six==1.17.0
+      - tensorflow-estimator==2.13.0
+      - tf-keras==2.18.0
+      - urllib3==2.3.0
