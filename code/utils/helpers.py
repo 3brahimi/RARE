@@ -132,8 +132,6 @@ def noise_aware_data(config, x_clean, y_clean, gx, gx_y):
 
 def noisy_data(x_clean, y_clean, x_noisy, y_noisy):
     x_all = None
-    print("x_noisy shape is", x_noisy.shape, "y_noisy shape is", y_noisy.shape)
-    print("x_clean shape is", x_clean.shape, "y_clean shape is", y_clean.shape)
     if x_noisy.shape[0] != x_clean.shape[0]:
         x_all = np.concatenate((x_clean, x_noisy.reshape(-1, x_noisy.shape[2])), axis=0)
     else:
@@ -183,8 +181,6 @@ def evaluate_and_plot(model, history, xy_test, path="./"):
     # Evaluate the model on the test data
     x_test = xy_test[0]
     y_test = xy_test[1]
-    print("x_test shape: ", x_test.shape)
-    print("y_test shape: ", y_test.shape)
     
     test_loss = model.evaluate(x_test, y_test)
     # Generate predictions on the test data
@@ -222,27 +218,25 @@ def evaluate_and_plot(model, history, xy_test, path="./"):
         
         
 def calculate_baseline_metric(dataset_generator, metric, x_clean, y_clean, x_noisy, y_noisy, input_features, training_type, res_folder):
-    
     y_noisy_bl = np.zeros((y_noisy.shape[0], y_noisy.shape[1]))
     for idx_shape, x_noise_vector in enumerate(x_noisy):
         y_noise_vector = dataset_generator.apply_equation(x_noise_vector[:, :len(input_features)])
         y_noisy_bl[idx_shape, :] = y_noise_vector.flatten()
-    
     outer_dists = ["Euclidean"]
     correct_weights = estimate_weights(model_path=f"{res_folder}/baseline/", inputs=input_features, dataset_generator=dataset_generator,
                                        num_samples=1000, model_type="expression")
     if training_type == "noise-aware":
         correct_weights = np.append(correct_weights, np.zeros(len(correct_weights)))
 
-    if np.min(x_clean) != np.max(x_clean) and np.min(y_clean) != np.max(y_clean):       
-        rm_bl_train = metric.calculate_metric(x_clean, y_clean, 
+    if np.min(x_clean) != np.max(x_clean) and np.min(y_clean) != np.max(y_clean):      
+        rm_bl = metric.calculate_metric(x_clean, y_clean, 
                                           x_hat=x_noisy, y_hat=y_noisy_bl,
                                           outer_dist=outer_dists, weights=correct_weights, path=f"{res_folder}/baseline/training")["Euclidean"]
     else:
         print("Skipping metric calculation due to identical min and max values in input or output.")
-        rm_bl_train = 1
-        rm_bl_train = {"Output distance": 1}
+        rm_bl = 1
+        rm_bl = {"Output distance": 1}
     with open(f"{res_folder}/baseline/training/rm.txt", "w") as outfile:
-        outfile.write(str(rm_bl_train))
+        outfile.write(str(rm_bl))
     
-    return rm_bl_train["Output distance"], correct_weights        
+    return rm_bl["Output distance"], correct_weights

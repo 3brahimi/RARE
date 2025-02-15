@@ -1,5 +1,7 @@
 import datetime
 import os
+
+import torch
 from DataGens.NoiseGenerator import NoiseGenerator
 from DataGens.DatasetGenerator import DatasetGenerator
 import numpy as np
@@ -87,6 +89,8 @@ def _prepare_noisy_data_test(x_noisy, x_clean, metric, data_gen):
     return x_noisy, input_shape
     
 def main(res_folder, json_file, loss_function, noise_type):
+    tf.keras.mixed_precision.set_global_policy('mixed_float16')
+    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
     with open(json_file) as f:
         configs = json.load(f)
@@ -118,6 +122,8 @@ def main(res_folder, json_file, loss_function, noise_type):
         input_features = configs["features"]
         num_inputs = len(input_features)
         input_shape = num_inputs
+        dataset_generator = DatasetGenerator(equation_str, noise_model, input_features, num_samples=x_len)
+
         xy_train, xy_valid, xy_test, xy_noisy, xy_clean, gx_gy, indices = dataset_generator.split(config, metric_instance=metric)       
         
         if training_type == "noise-aware":
@@ -125,6 +131,8 @@ def main(res_folder, json_file, loss_function, noise_type):
         else:
             x_noisy = xy_noisy[0]
             input_shape = num_inputs
+           
+        xy_noisy = (x_noisy, xy_noisy[1])
         y_noisy = xy_noisy[1]    
         # Extract noisy and clean data
         # x_noisy, y_noisy = xy_noisy
@@ -147,16 +155,14 @@ def main(res_folder, json_file, loss_function, noise_type):
         x_clean_valid = x_clean[indices_valid, :]
         y_clean_train = y_clean[indices_train,]
         y_clean_valid = y_clean[indices_valid,]
-        
-        if np.min(x_clean) != np.max(x_clean) and np.min(y_clean) != np.max(y_clean):
-        
+        if np.min(x_clean_train) != np.max(x_clean_train) and np.min(y_clean_train) != np.max(y_clean_train):    
             # Calculate the baseline metric and weights
             bl_denominator, bl_weights = calculate_baseline_metric(dataset_generator, metric, x_clean_train, y_clean_train, x_noisy_train, y_noisy_train, input_features, training_type, res_folder)
         else:
             print("Skipping baseline metric calculation due to identical min and max values in input or output.")
             bl_denominator = 1
-        print(f"Baseline denominator: {bl_denominator}", bl_weights)
-        
+        print(f"Baseline denominator: {bl_denominator}")
+
         ############################# calculate the nominator of the metric in case of custom loss
         gxs_dists = []
         for i in range(num_inputs):
@@ -183,8 +189,6 @@ def main(res_folder, json_file, loss_function, noise_type):
             losses = np.loadtxt(f"{models_path}/losses.txt")                
             for i in range(models_num):
                 model_path_i = f"{models_path}/model_{i+1}"
-                print(model_path_i)
-                print("input_shape", input_shape)
                 trainer = ModelTrainer().get_model(config["type"], shape_input=input_shape, loss_function=loss_function)
                 model = trainer.model
                 if config["type"] in ["RF", "LR"]:
@@ -308,14 +312,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     eqs_json_files = {
-        "I_6_2a.json",
-        "I_14_3.json",
+        # "I_6_2a.json",
+        # "I_14_3.json",
         "I_6_2b.json",
-        "IV_1.json",
-        "IV_2.json",
-        "IV_6.json",
-        "IV_8.json",
-        "IV_10.json",
+        # "IV_1.json",
+        # "IV_2.json",
+        # "IV_6.json",
+        # "IV_8.json",
+        # "IV_10.json",
         
     }
     

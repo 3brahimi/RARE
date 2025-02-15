@@ -389,7 +389,6 @@ class RobustnessMetric:
             y_bounds_min = y_bounds[1][y_sort_idx]
 
             self.plot_G(x=np.linspace(0, len(y), len(y)), true_sloution=y, distances_array=gy["G_distances"], dist_max=y_dists_max, dist_min=y_dists_min, x_max=y_bounds[0], x_min=y_bounds[1], vis=False, save=True, fig_name=f"G for output", path=f"{path}/G_output")
-
         robustness = self.metric_ratio(true_input=x, g_input=gxs, g_output=gy["G"], true_output=y, dist=outer_dist, type="overall", weights=weights)
         if tf.is_tensor(x):
             # return the robustness as a tensor

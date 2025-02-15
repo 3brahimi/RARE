@@ -32,7 +32,7 @@ def estimate_weights(model_path, inputs, dataset_generator, training_type="clean
         'names': [f"x{i}" for i in range(len(new_inputs))],
         'bounds': [[val["range"][0], val["range"][1]] for key, val in input_feats]
     }
-    param_values = saltelli.sample(problem, 1000, calc_second_order=False)
+    param_values = saltelli.sample(problem, 10000, calc_second_order=False)
     
     model = None
     if training_type == "noise-aware":
@@ -53,7 +53,7 @@ def estimate_weights(model_path, inputs, dataset_generator, training_type="clean
         model = trainer.model
         customloss = CustomLoss(model=model, metric=metric, y_clean=y_clean, x_noisy=x_noisy, len_input_features=len(input_feats), bl_ratio=bl_ratio)
 
-        optimizer = keras.optimizers.Adam(learning_rate=0.001)
+        optimizer = keras.optimizers.Adam(learning_rate=0.0001)
 
         model.compile(optimizer='adam', loss=customloss)
         model.load_weights(f"{model_path}/model_weights.h5")
@@ -66,7 +66,7 @@ def estimate_weights(model_path, inputs, dataset_generator, training_type="clean
         if model_type in ["LR", "RF"]:
             model = trainer.load_model(model_path)
         else:
-            optimizer = keras.optimizers.Adam(learning_rate=0.001)
+            optimizer = keras.optimizers.Adam(learning_rate=0.0001)
             model.compile(optimizer=optimizer, loss=loss_function)
             model.load_weights(f"{model_path}/model_weights.h5")
             # model = keras.models.load_model(model_path)
