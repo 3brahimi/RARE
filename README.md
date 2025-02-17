@@ -90,14 +90,14 @@ This will first generate all the testing results, compare the models to each oth
 The generated figure will be saved as a PDF file in the results directory:
 
 ```bash
-./results/robustness_plots.pdf
+./robustness_evaluation_figure2.pdf
 ```
 
 ### Example Visualization
 
 Below is an example of the robustness evaluation figure:
 
-![Robustness Evaluation](./robustness_evaluation_figure2.png)
+![Robustness Evaluation](https://github.com/3brahimi/RobuTT/blob/main/code/robustness_evaluation_figure2.png)
 
 This figure presents the robustness metric across different noise types. The first row displays results for varying noise variances, while the second row shows results for different perturbation percentages.
 
