@@ -458,7 +458,7 @@ class RandomForestModel(BaseModel):
         with open(f"{path}/model.pkl", 'wb') as f:
             pickle.dump(self.model, f)
 
-    def load_model(self, filepath, model_obj):
+    def load_model(self, filepath):
         with open(f'{filepath}/model.pkl', 'rb') as f:
             self.model = pickle.load(f)
         return self.model
@@ -499,7 +499,7 @@ class LinearRegressionModel(BaseModel):
         with open(f"{path}/model.pkl", 'wb') as f:
             pickle.dump(self.model, f)
     
-    def load_model(self, filepath, model_obj):
+    def load_model(self, filepath):
         
         model = pickle.load(open(f'{filepath}/model.pkl', 'rb'))
         

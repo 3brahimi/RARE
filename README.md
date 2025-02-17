@@ -68,3 +68,37 @@ python excel_parse.py
 Make sure the Excel file, which can be downloaded from [AI-Feynman](https://space.mit.edu/home/tegmark/aifeynman.html), is properly formatted and located in the expected directory as specified in the script.
 Please note that this will create the equations configurations with default values only.
 In order to train the models correctly, additional configurations (such as the type of models, type of training, number of epochs, number of neurons, etc.) need to be done.
+
+
+## Reproducibility
+
+To ensure the reproducibility of our robustness evaluation experiments, we provide a Python script that generates the robustness metric plots for different models under various noise conditions.
+
+### Generating the Robustness Plots
+
+We provide a set of pre-trained models saved under the directory `./checkpoints/`.
+Running the testing script on these models will perform the robustness evaluation against all the noise models defined in `./configs/testing_noise_models.json`, which are combined into 6 noise models in the paper manuscript ($N_0$ to $N_5$).
+
+```bash
+python testing.py
+```
+
+This will first generate all the testing results, compare the models to each others and generate the required data files, and finally generate a similar figure that visualizes the robustness metric $\mathcal{R}$ across different noise distributions and perturbation levels.
+
+### Expected Output
+
+The generated figure will be saved as a PDF file in the results directory:
+
+```bash
+./results/robustness_plots.pdf
+```
+
+### Example Visualization
+
+Below is an example of the robustness evaluation figure:
+
+![Robustness Evaluation](./robustness_evaluation_figure2.png)
+
+This figure presents the robustness metric across different noise types. The first row displays results for varying noise variances, while the second row shows results for different perturbation percentages.
+
+By following these steps, you can easily reproduce our robustness evaluation experiments and compare the effects of perturbations on different models.

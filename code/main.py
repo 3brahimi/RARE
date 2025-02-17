@@ -314,7 +314,7 @@ if __name__ == '__main__':
     eqs_json_files = {
         "I_6_2a.json",
         "I_14_3.json",
-        "I_6_2b.json",
+        # "I_6_2b.json",
         "IV_1.json",
         "IV_2.json",
         "IV_6.json",
