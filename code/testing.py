@@ -128,21 +128,21 @@ import matplotlib.pyplot as plt
 def plot_results(variance_files, percentage_files, x_labels, title_labels):
     """Plot robustness metrics with 2-row layout (Variances on top, Percentages below) and save the figure."""
     
-    fig, axes = plt.subplots(2, 3, figsize=(8, 6), sharey=True)
+    fig, axes = plt.subplots(2, 3, figsize=(7, 6), sharey=True)
     
     datasets = [variance_files, percentage_files]
     y_limits = [6, 10]  
     
-    legend_labels = {}  # Store handles & labels for a single legend
-    
+    legend_labels = {}
+    x_ticks_variances = [0.2, 0.4, 0.6, 0.8, 1]
+    x_ticks_percentages = [20, 40, 60, 80, 100]
     for row, dataset_group in enumerate(datasets):  
         for col, (dataset, xlabel, title) in enumerate(zip(dataset_group, x_labels[row], title_labels[row])):
             
             ax = axes[row, col]
 
             if os.path.exists(dataset):
-                data = pd.read_csv(dataset)
-                
+                data = pd.read_csv(dataset)                
                 # Plot each model's robustness
                 line_rf, = ax.plot(data["variance" if row == 0 else "percentage"], data["rm-RF-mse"], color="orange", linewidth=2.5)
                 line_mlp, = ax.plot(data["variance" if row == 0 else "percentage"], data["rm-linear-mse"], color="blue", linewidth=2.5)
@@ -154,7 +154,6 @@ def plot_results(variance_files, percentage_files, x_labels, title_labels):
                 ax.set_title(title, fontsize=14, pad=10)
                 ax.set_xlabel(xlabel, fontsize=12)
                 
-                # Store legend only for first subplot
                 if row == 0 and col == 0:
                     legend_labels = {
                         "RF": line_rf,
@@ -164,17 +163,24 @@ def plot_results(variance_files, percentage_files, x_labels, title_labels):
                         r"$\mathrm{CNN}(\mathrm{MSE}_\mathcal{P})$": line_cnn_p,
                         "LR": line_lr
                     }
-            ax.set_ylim([0, y_limits[row]])  
+            ax.set_ylim(0, y_limits[row])
+            ax.set_autoscale_on(False)  # Disable auto rescaling
 
-    # Add Y-axis label
-    fig.text(0.04, 0.5, r"$\mathcal{R}$", va='center', rotation='vertical', fontsize=10)
-    
-    # Move the legend outside the plot
-    fig.legend(legend_labels.values(), legend_labels.keys(), loc="upper center", bbox_to_anchor=(0.5, 1.05), ncol=6, fontsize=10, frameon=False)
+            # ✅ Adjust x-axis ticks to match original TikZ figure
+            if row == 0:  # Variance row
+                ax.set_xticks(x_ticks_variances)
+            else:  # Percentage row
+                ax.set_xticks(x_ticks_percentages)
+                ax.set_xticklabels([str(tick) for tick in x_ticks_percentages])  # Ensure proper labels
 
-    # Adjust layout and save
+
+    plt.draw()
+    fig.text(0.02, 0.49, r"$\mathcal{R}$", va='center', rotation='vertical', fontsize=10)    
+    fig.legend(legend_labels.values(), legend_labels.keys(), loc="upper center", bbox_to_anchor=(0.5, 1.0), ncol=6, fontsize=10, frameon=False)
+
+    plt.subplots_adjust(hspace=0.3, wspace=0.3)
     plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.savefig("./noise_models_testing_variances_percentages_fixed.png", dpi=300,bbox_inches="tight")
+    plt.savefig("./robustness_evaluation_figure2.png", dpi=300,bbox_inches="tight")
     plt.show()
 
 def generate_plots():
@@ -194,6 +200,7 @@ def generate_plots():
     [r"$\mathcal{N}_3$", r"$\mathcal{N}_4$", r"$\mathcal{N}_5$"]  # Bottom row (percentages)
     ]
     )
+    
 if __name__ == '__main__':
     json_files = [
         "I_6_2a.json",

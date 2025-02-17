@@ -23,7 +23,7 @@ def compare_models(models_results_path, models_set, models_set_name, x_measure =
     if x_measure == "variance":
         x = [0.1, 0.4, 0.6, 0.8, 1]
     elif x_measure == "percentage":
-        x = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+        x = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     
     df = pd.DataFrame()
     df[x_measure] = x
