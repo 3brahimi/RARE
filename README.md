@@ -87,10 +87,10 @@ This will first generate all the testing results, compare the models to each oth
 
 ### Expected Output
 
-The generated figure will be saved as a PDF file in the results directory:
+The generated figure will be saved as a PNG file in the directory:
 
 ```bash
-./robustness_evaluation_figure2.pdf
+./robustness_evaluation_figure2.png
 ```
 
 ### Example Visualization
