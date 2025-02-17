@@ -59,7 +59,7 @@ def evaluate_robustness_model(model, dataset_generator, config, metric, random_s
         y_noisy_pred[idx_shape, :] = y_noise_vector.flatten()     
 
     if np.min(x_clean) != np.max(x_clean) and np.min(y_clean) != np.max(y_clean):                              
-        rm = metric.calculate_metric(x_clean, y_clean, x_hat=x_noisy, y_hat=y_noisy_pred, outer_dist=["Euclidean", "L1"], weights=[1], path=f"{robustness_res_path}")
+        rm = metric.calculate_metric(x_clean, y_clean, x_hat=x_noisy, y_hat=y_noisy_pred, outer_dist=["Euclidean", "L1"], weights=[1], path=f"{robustness_res_path}", vis=False, save=False)
     else:
         print("Skipping metric calculation due to identical min and max values in input or output.")
         rm = {"Output distance": 1}
