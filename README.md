@@ -72,22 +72,29 @@ In order to train the models correctly, additional configurations (such as the t
 
 ## Reproducibility
 
-To ensure the reproducibility of our robustness evaluation experiments, we provide a Python script that generates the robustness metric plots for different models under various noise conditions.
+To ensure the reproducibility of our robustness evaluation experiments, we provide a Python script that generates the robustness evaluation for different models under various noise conditions.
+
+### Testing Noise Models
+Testing noise models in the paper manuscript ($N_0$ to $N_5$) configurations are provided in `./configs/testing_noise_models.json`.
+
+### Pre-trained models
+We provide a set of pre-trained models saved under the directory `./checkpoints/`.
 
 ### Generating the Robustness Plots
-
-We provide a set of pre-trained models saved under the directory `./checkpoints/`.
-Running the testing script on these models will perform the robustness evaluation against all the noise models defined in `./configs/testing_noise_models.json`, which are combined into 6 noise models in the paper manuscript ($N_0$ to $N_5$).
+Running the testing script will load the pre-trained models, and perform the robustness evaluation against all the noise models defined noise models.
 
 ```bash
 python testing.py
 ```
 
-This will first generate all the testing results, compare the models to each others and generate the required data files, and finally generate a similar figure that visualizes the robustness metric $\mathcal{R}$ across different noise distributions and perturbation levels.
+This script executes the following steps:
+1. Evaluate all models against the noise models and save the testing results
+2. Compare the models to each others and generate the required data files for each noise model
+3. Generate a similar figure to the one in the manuscript to visualize the robustness measure $\mathcal{R}$ across different noise distributions and perturbation levels.
 
 ### Expected Output
 
-The generated figure will be saved as a PNG file in the directory:
+The generated figure will be saved as a PNG file:
 
 ```bash
 ./robustness_evaluation_figure2.png
