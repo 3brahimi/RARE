@@ -124,7 +124,7 @@ def test_models(models_folder, configs):
 def plot_results(variance_files, percentage_files, x_labels, title_labels):
     """Plot robustness metrics with 2-row layout (Variances on top, Percentages below) and save the figure."""
     
-    fig, axes = plt.subplots(2, 3, figsize=(7, 6), sharey=True)
+    fig, axes = plt.subplots(2, 3, figsize=(6, 5.5), sharey=True)
     
     datasets = [variance_files, percentage_files]
     y_limits = [6, 10]  
@@ -197,7 +197,7 @@ def generate_plots():
     )
     
 if __name__ == '__main__':
-    # test_models("./checkpoints", "./configs/equations/I_6_2a.json")
+    test_models("./checkpoints", "./configs/equations/I_6_2a.json")
     
     N0_set = ["n0", "n1", "n2", "n3", "n4"] # normal-variances
     N1_set = ["n5", "n6", "n7", "n8", "n9"] # uniform-variances
