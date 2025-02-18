@@ -1,0 +1,87 @@
+{
+    "equation": "epsilon*Ef**2/2",
+    "num_samples":100,
+
+    "models": [
+        {
+            "type": "linear",
+            "model_path": "clean",
+            "load": false,
+            "training_type": "clean",
+            "fit_args": {
+                "epochs": 600,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [
+                0,
+                1
+            ],
+            "extended_data": false,
+            "sampling_rate":10
+        },
+        {
+            "type": "linear",
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 600,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [
+                0,
+                1
+            ],
+            "extended_data": false,
+            "sampling_rate":10
+        },
+        {
+            "type": "cnn",
+            "model_path": "clean",
+            "load": false,
+            "training_type": "clean",
+            "fit_args": {
+                "epochs": 600,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [
+                0,
+                1
+            ],
+            "extended_data": false,
+            "sampling_rate":10
+        },
+        {
+            "type": "cnn",
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 600,
+                "early_stopping": 20
+            },
+            "noisy_input_feats": [
+                0,
+                1
+            ],
+            "extended_data": false,
+            "sampling_rate":10
+        }
+    ],
+    "features": {
+        "epsilon": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "Ef": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        }
+    }
+}
