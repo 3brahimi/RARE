@@ -10,7 +10,7 @@ class NoiseGenerator:
         if 'epsilon' in kwargs:
             self.epsilon = kwargs['epsilon']
         else:
-            self.epsilon = 0.5
+            self.epsilon = 1
 
     def generate_noise(self, random_seed=0):
         noises = []
@@ -24,6 +24,7 @@ class NoiseGenerator:
                 noise = np.random.uniform(-self.variance, self.variance, self.num_samples) * self.percentage
             elif self.noise_type == 'laplace':
                 noise = np.random.laplace(0, self.variance, self.num_samples) * self.percentage
+                
                 noise = noise / self.epsilon
             elif self.noise_type == 'laplace_dp':
                 noise = np.random.laplace(0, self.variance, self.num_samples) * self.percentage

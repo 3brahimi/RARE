@@ -52,7 +52,6 @@ def evaluate_robustness_model(model, dataset_generator, config, metric, random_s
     target_features = config["noisy_input_feats"]
     
     x_noisy, y_noisy = dataset_generator.modulate_clean(x_clean, y_clean, target_feat_idx=target_features, random_seeds=random_seeds_all)
-
     y_noisy_pred = y_noisy.copy()
     for idx_shape, x_noise_vector in enumerate(x_noisy):
         y_noise_vector = model.predict(x_noise_vector)             
@@ -118,11 +117,8 @@ def test_models(models_folder, configs):
             model_robustness_results = f"{models_folder}_robustness_testing/{model_name}/nmodel_{nmodel_name}"
             os.makedirs(model_robustness_results, exist_ok=True)
 
-            evaluate_robustness_model(model, test_dataset_generator, config, metric, [22], model_robustness_results, [1])
+            evaluate_robustness_model(model, test_dataset_generator, config, metric, [0], model_robustness_results, [1])
             
-import os
-import pandas as pd
-import matplotlib.pyplot as plt
 
 ### ---------- PLOTTING FUNCTION ---------- ###
 def plot_results(variance_files, percentage_files, x_labels, title_labels):
@@ -164,14 +160,13 @@ def plot_results(variance_files, percentage_files, x_labels, title_labels):
                         "LR": line_lr
                     }
             ax.set_ylim(0, y_limits[row])
-            ax.set_autoscale_on(False)  # Disable auto rescaling
+            ax.set_autoscale_on(False)
 
-            # ✅ Adjust x-axis ticks to match original TikZ figure
-            if row == 0:  # Variance row
+            if row == 0:
                 ax.set_xticks(x_ticks_variances)
-            else:  # Percentage row
+            else:
                 ax.set_xticks(x_ticks_percentages)
-                ax.set_xticklabels([str(tick) for tick in x_ticks_percentages])  # Ensure proper labels
+                ax.set_xticklabels([str(tick) for tick in x_ticks_percentages])
 
 
     plt.draw()
@@ -202,9 +197,8 @@ def generate_plots():
     )
     
 if __name__ == '__main__':
-    json_files = [
-        "I_6_2a.json",
-        ]
+    # test_models("./checkpoints", "./configs/equations/I_6_2a.json")
+    
     N0_set = ["n0", "n1", "n2", "n3", "n4"] # normal-variances
     N1_set = ["n5", "n6", "n7", "n8", "n9"] # uniform-variances
     N2_set = ["n10", "n11", "n12", "n13", "n14"] # laplace-variances
@@ -212,7 +206,6 @@ if __name__ == '__main__':
     N4_set = ["n25", "n26", "n27", "n28", "n29", "n30", "n31", "n32", "n33", "n34"] # uniform-percentages
     N5_set = ["n35", "n36", "n37", "n38", "n39", "n40", "n41", "n42", "n43", "n44"] # laplace-percentages
     
-    test_models("./checkpoints", "./configs/equations/I_6_2a.json")
     
     compare_models("./checkpoints_robustness_testing", N0_set, "N0", x_measure="variance")
     compare_models("./checkpoints_robustness_testing", N1_set, "N1", x_measure="variance")
