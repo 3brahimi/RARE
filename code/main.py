@@ -20,7 +20,18 @@ def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_
     print("Evaluating robustness of models..")
     x_clean, y_clean = dataset_generator.generate_dataset()
     target_features = config["noisy_input_feats"]
+
     
+    if config["extended_data"] == True:
+        x_clean, y_clean = dataset_generator.meshgrid_x_y(x_clean)
+
+        num_input_features = x_clean.shape[1]
+        if num_input_features > 1:
+            x_clean = x_clean.reshape(x_clean.shape[0], -1).T
+        y_clean = y_clean.ravel()
+        original_num_samples = dataset_generator.num_samples
+        dataset_generator.num_samples = x_clean.shape[0]
+        dataset_generator.noise_generator.num_samples = x_clean.shape[0]
     # TODO: here we can generate multiple noisy datasets
     x_noisy, y_noisy = dataset_generator.modulate_clean(x_clean, y_clean, target_feat_idx=target_features, random_seeds=random_seeds_all[0])
 
@@ -31,7 +42,15 @@ def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_
     
     if training_type == "noise-aware":
         x_noisy, input_shape = prepare_noisy_data(x_noisy=x_noisy, x_clean=x_clean, gx=None, num_inputs=num_inputs, data_gen=dataset_generator, metric=metric, stage="test")
-        
+    
+    if config["extended_data"] == True:
+        sampling_rate = np.int(np.ceil(x_clean.shape[0]/((original_num_samples*2)*(x_clean.shape[1]))))
+        print(f"Sampling rate: {sampling_rate}", x_clean.shape[0], original_num_samples, x_clean.shape[1])
+        x_clean = x_clean[::sampling_rate]
+        y_clean = y_clean[::sampling_rate]
+        x_noisy = x_noisy[:, ::sampling_rate]
+        y_noisy = y_noisy[:, ::sampling_rate]
+    
     r_all_models = {}
     for model_idx, model in enumerate(models):
         model_i_robustness_folder = f"{robustness_res_path}/model_{model_idx}"
@@ -314,7 +333,9 @@ if __name__ == '__main__':
     eqs_json_files = {
         "I_6_2a.json",
         "I_14_3.json",
-        # "I_6_2b.json",
+        "I_6_2b.json",
+        "I_12_2.json",
+        "I_12_4.json",
         "IV_1.json",
         "IV_2.json",
         "IV_6.json",

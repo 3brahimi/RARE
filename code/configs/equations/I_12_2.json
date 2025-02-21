@@ -1,0 +1,72 @@
+{
+    "equation": "q1*q2*r/(4*pi*epsilon*r**3)",
+    "num_samples": 10,
+    "models": [
+        {
+            "type": "linear",
+            "model_path": "clean",
+            "load": false,
+            "training_type": "clean",
+            "fit_args": {
+                "epochs": 700,
+                "early_stopping": 10
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "extended_data":true
+
+        },
+        {
+            "type": "linear",
+            "model_path": "noise-aware",
+            "load": false,
+            "training_type": "noise-aware",
+            "fit_args": {
+                "epochs": 700,
+                "early_stopping": 10
+            },
+            "noisy_input_feats": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "extended_data":true
+
+        }
+    ],
+    "features": {
+        "q1": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "q2": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "epsilon": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        },
+        "r": {
+            "type": "float",
+            "range": [
+                1.0,
+                5.0
+            ]
+        }
+    }
+}
