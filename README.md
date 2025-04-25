@@ -1,4 +1,4 @@
-# Robustness Testing and Training Against Perturbations
+# **RARE:** Robustness Assessment and Regularized Enhancement
 
 ## Overview
 This project focuses on evaluating and improving the robustness of machine learning models against input perturbations.
