@@ -50,8 +50,26 @@ def evaluate_robustness_model(model, dataset_generator, config, metric, random_s
     print("Evaluating robustness of models..")
     x_clean, y_clean = dataset_generator.generate_dataset()
     target_features = config["noisy_input_feats"]
-    
+    if config["extended_data"] == True:
+        x_clean, y_clean = dataset_generator.meshgrid_x_y(x_clean)
+
+        num_input_features = x_clean.shape[1]
+        if num_input_features > 1:
+            x_clean = x_clean.reshape(x_clean.shape[0], -1).T
+        y_clean = y_clean.ravel()
+        original_num_samples = dataset_generator.num_samples
+        dataset_generator.num_samples = x_clean.shape[0]
+        dataset_generator.noise_generator.num_samples = x_clean.shape[0]
+        
     x_noisy, y_noisy = dataset_generator.modulate_clean(x_clean, y_clean, target_feat_idx=target_features, random_seeds=random_seeds_all)
+    
+    if config["extended_data"] == True:
+        sampling_rate = np.int(np.ceil(x_clean.shape[0]/((original_num_samples*2)*(x_clean.shape[1]))))
+        x_clean = x_clean[::sampling_rate]
+        y_clean = y_clean[::sampling_rate]
+        x_noisy = x_noisy[:, ::sampling_rate]
+        y_noisy = y_noisy[:, ::sampling_rate]
+        
     y_noisy_pred = y_noisy.copy()
     for idx_shape, x_noise_vector in enumerate(x_noisy):
         y_noise_vector = model.predict(x_noise_vector)             

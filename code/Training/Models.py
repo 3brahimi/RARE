@@ -255,17 +255,28 @@ class LinearModel(BaseModel):
             x_train, y_train = xy_train
             x_valid, y_valid = xy_valid
             fit_args_copy = fit_args.copy()
+            dp_arg = fit_args_copy.get("dp", False)
             optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+            if dp_arg:
+                # use differential privace optimizer
+                import tensorflow_privacy
+                optimizer = tensorflow_privacy.DPKerasAdamOptimizer(
+                    l2_norm_clip=0.7,
+                    noise_multiplier=2.1,
+                    num_microbatches=1,
+                    learning_rate=0.001,
+                )
             early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=fit_args_copy["early_stopping"])
     
             if self.loss_function == "msep":
                 self._compile_custom_loss(fit_args_copy, optimizer)
             else:
                 self.model.compile(optimizer=optimizer, loss=self.loss_function)
-    
+
             fit_args_copy["callbacks"] = [early_stopping]
             fit_args_new = {key: value for key, value in fit_args_copy.items() if key != 'early_stopping'}
-    
+            # drop the dp argument from fitting
+            del fit_args_new["dp"]
             history = self.model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=2, **fit_args_new)
     
             return self.model, history
@@ -375,7 +386,17 @@ class CNNModel(BaseModel):
         x_valid = xy_valid[0]
         y_valid = xy_valid[1]
         fit_args_copy = fit_args.copy()
+        dp_arg = fit_args_copy.get("dp", False)
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+        if dp_arg:
+            # use differential privace optimizer
+            import tensorflow_privacy
+            optimizer = tensorflow_privacy.DPKerasAdamOptimizer(
+                l2_norm_clip=0.7,
+                noise_multiplier=2.1,
+                num_microbatches=1,
+                learning_rate=0.001,
+            )
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=fit_args_copy["early_stopping"])
 
         if self.loss_function == "msep":

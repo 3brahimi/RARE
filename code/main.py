@@ -44,8 +44,7 @@ def evaluate_robustness(models, dataset_generator, config, metric, random_seeds_
         x_noisy, input_shape = prepare_noisy_data(x_noisy=x_noisy, x_clean=x_clean, gx=None, num_inputs=num_inputs, data_gen=dataset_generator, metric=metric, stage="test")
     
     if config["extended_data"] == True:
-        sampling_rate = np.int(np.ceil(x_clean.shape[0]/((original_num_samples*2)*(x_clean.shape[1]))))
-        print(f"Sampling rate: {sampling_rate}", x_clean.shape[0], original_num_samples, x_clean.shape[1])
+        sampling_rate = int(np.ceil(x_clean.shape[0]/((original_num_samples*2)*(x_clean.shape[1]))))
         x_clean = x_clean[::sampling_rate]
         y_clean = y_clean[::sampling_rate]
         x_noisy = x_noisy[:, ::sampling_rate]
@@ -134,7 +133,7 @@ def main(res_folder, json_file, loss_function, noise_type):
     metric = RobustnessMetric()
     no_noisy_tests = 1
     random_seeds_all = [np.linspace(0, 1000, num_inputs, dtype=int) for _ in range(no_noisy_tests)]
-    models_num = 10
+    models_num = 2
     
     for config in configs["models"]:
         # reset config values for each model
@@ -199,8 +198,7 @@ def main(res_folder, json_file, loss_function, noise_type):
         
         trainer = ModelTrainer().get_model(config["type"], shape_input=input_shape, loss_function=loss_function)
         
-        models_folder = f"{res_folder}/{config['type']}/{config['training_type']}/models_all"
-
+        models_folder = f"{res_folder}/{config['type']}/{config['training_type']}/dp_{config['dp']}/models_all"
         # if path is specified, load the models
         if config["load"] == True:
             models_path = config["model_path"]
@@ -217,8 +215,7 @@ def main(res_folder, json_file, loss_function, noise_type):
                     model.compile(optimizer='adam', loss=loss_function)
                     model.load_weights(f"{model_path_i}/model_weights.h5")                      
                 models.append(model)
-            print("Models loaded successfully")
-        
+            print("Models loaded successfully")        
         # if load is False, train the models  
         else:
             models = []
@@ -237,8 +234,8 @@ def main(res_folder, json_file, loss_function, noise_type):
                 config["fit_args"]["nominator"] = tf.convert_to_tensor(gxs_dists, dtype=tf.float64)
                 config["fit_args"]["y_clean_valid"] = tf.convert_to_tensor(y_clean_valid, dtype=tf.float64)
                 config["fit_args"]["y_clean_train"] = tf.convert_to_tensor(y_clean_train, dtype=tf.float64)
-            
             # train multiple models
+            config["fit_args"]["dp"] = config["dp"]
             for i in range(models_num):
                 model_path_i = f"{models_folder}/model_{i+1}"
                 if not os.path.exists(models_folder):
@@ -328,22 +325,22 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run robustness testing and training.")
     parser.add_argument('--noise_type', type=str, default="normal", help='Type of noise to apply.')
     parser.add_argument('--loss_function', type=str, default="mse", help='Loss function to use for training.')
+    parser.add_argument('--dp', type=bool, default=False, help="Use differential privacy")
 
     args = parser.parse_args()
-    
     eqs_json_files = {
         "I_6_2a.json",
-        "I_14_3.json",
-        "I_6_2b.json",
-        "I_12_2.json",
-        "I_12_4.json",
-        "IV_1.json",
-        "IV_2.json",
-        "IV_6.json",
-        "IV_8.json",
-        "IV_10.json",
-        "II_8_31.json",
-        "I_25_13.json"
+        # "I_14_3.json",
+        # "I_6_2b.json",
+        # "I_12_2.json",
+        # "I_12_4.json",
+        # # "IV_1.json",
+        # # "IV_2.json",
+        # # "IV_6.json",
+        # # "IV_8.json",
+        # # "IV_10.json",
+        # "II_8_31.json",
+        # "I_25_13.json"
         
     }
     
