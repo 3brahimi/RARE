@@ -17,7 +17,8 @@
                 1
             ],
             "extended_data": false,
-            "sampling_rate":10
+            "sampling_rate":10,
+            "dp": false
         },
         {
             "type": "linear",
@@ -33,7 +34,8 @@
                 1
             ],
             "extended_data": false,
-            "sampling_rate":10
+            "sampling_rate":10,
+            "dp": false
         },
         {
             "type": "cnn",
@@ -65,7 +67,8 @@
                 1
             ],
             "extended_data": false,
-            "sampling_rate":10
+            "sampling_rate":10,
+            "dp": false
         }
     ],
     "features": {

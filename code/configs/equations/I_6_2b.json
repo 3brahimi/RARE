@@ -16,55 +16,8 @@
                 1,
                 2
             ],
-        "extended_data": true
-        },
-        {
-            "type": "linear",
-            "model_path": "noise-aware",
-            "load": false,
-            "training_type": "noise-aware",
-            "fit_args": {
-                "epochs": 500,
-                "early_stopping": 10
-            },
-            "noisy_input_feats": [
-                0,
-                1,
-                2
-            ],
-            "extended_data": true
-        },
-        {
-            "type": "cnn",
-            "model_path": "clean",
-            "load": false,
-            "training_type": "clean",
-            "fit_args": {
-                "epochs": 1000,
-                "early_stopping": 20
-            },
-            "noisy_input_feats": [
-                0,
-                1,
-                2
-            ],
-        "extended_data": true
-        },
-        {
-            "type": "cnn",
-            "model_path": "noise-aware",
-            "load": false,
-            "training_type": "noise-aware",
-            "fit_args": {
-                "epochs": 500,
-                "early_stopping": 10
-            },
-            "noisy_input_feats": [
-                0,
-                1,
-                2
-            ],
-            "extended_data": true
+        "extended_data": true,
+        "dp": false
         }
     ],
     "features": {

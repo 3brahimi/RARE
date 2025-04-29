@@ -15,7 +15,8 @@
                 0
             ],
             "extended_data":false,
-            "sampling_rate": 1
+            "sampling_rate": 1,
+            "dp": false
         },
         {
             "type": "linear",
@@ -30,7 +31,8 @@
                 0
             ],
             "extended_data":false,
-            "sampling_rate": 1
+            "sampling_rate": 1,
+            "dp": false
         },
         {
             "type": "cnn",
@@ -45,7 +47,8 @@
                 0
             ],
             "extended_data":false,
-            "sampling_rate": 1
+            "sampling_rate": 1,
+            "dp": false
         },
         {
             "type": "cnn",
@@ -60,7 +63,8 @@
                 0
             ],
             "extended_data":false,
-            "sampling_rate": 1
+            "sampling_rate": 1,
+            "dp": false
         }
     ],
     "features": {

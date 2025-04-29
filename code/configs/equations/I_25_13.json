@@ -48,7 +48,8 @@
                 1
             ],
             "extended_data": true,
-            "sampling_rate": 1
+            "sampling_rate": 1,
+            "dp": false
         },
         {
             "type": "cnn",
@@ -64,7 +65,8 @@
                 1
             ],
             "extended_data": true,
-            "sampling_rate": 1
+            "sampling_rate": 1,
+            "dp": false
         }
     ],
     "features": {
