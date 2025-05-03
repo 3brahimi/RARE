@@ -24,9 +24,10 @@ for _, row in df.iterrows():
                     "epochs": 200,
                     "early_stopping": 20
                 },
-                "noisy_input_feats": []
-            }
-            
+                "noisy_input_feats": [],
+                "extended_data": True,
+                "dp": False
+            }            
         ],
         "features": {}
     }

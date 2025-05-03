@@ -225,7 +225,7 @@ def main(res_folder, json_file, loss_function, noise_type):
             last_epoch = []
             rm_vals = []
             # set the fit arguments if the loss function is msep
-            if loss_function == "msep":
+            if loss_function == "msep" or loss_function == "huberp":
                 config["fit_args"]["metric"] = metric
                 config["fit_args"]["x_noisy_valid"] = tf.convert_to_tensor(x_noisy, dtype=tf.float64)
                 config["fit_args"]["x_noisy_train"] = tf.convert_to_tensor(x_noisy_train, dtype=tf.float64)

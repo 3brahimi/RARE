@@ -14,7 +14,7 @@ class CustomLoss(tf.keras.losses.Loss):
     tf.keras.mixed_precision.set_global_policy('mixed_float16')
 
     # def __init__(self, model, metric, y_clean, x_noisy, len_input_features, bl_ratio, nominator, **kwargs):
-    def __init__(self, model, metric, y_clean, x_noisy, len_input_features, bl_ratio, **kwargs):
+    def __init__(self, model, metric, y_clean, x_noisy, len_input_features, bl_ratio, base_loss='mse', **kwargs):
         super().__init__(**kwargs)
         self.model = model
         self.metric = metric
@@ -22,7 +22,7 @@ class CustomLoss(tf.keras.losses.Loss):
         self.input_features = len_input_features
         self.bl_ratio = bl_ratio
         self.y_clean = y_clean
-    
+        self.base_loss = base_loss
     
     def extract_g(self, y_noisy_tf, y_clean):
         y_noisy_min = tf.reduce_min(y_noisy_tf, axis=0)
@@ -49,10 +49,19 @@ class CustomLoss(tf.keras.losses.Loss):
         x_reshaped = x
         return self.model(x_reshaped)
 
+    def get_base_loss(self, y_true, y_pred):
+        if self.base_loss == 'mse':
+            return mean_squared_error(y_true, y_pred)
+        elif self.base_loss == 'mae':
+            return tf.keras.losses.mean_absolute_error(y_true, y_pred)
+        elif self.base_loss == 'huber':
+            return tf.keras.losses.huber(y_true, y_pred)
+        else:
+            raise ValueError(f"Unsupported base loss: {self.base_loss}")
+    
     def call(self, y_true, y_pred):
         # Calculate the base loss (e.g., MSE loss)
-        base_loss = mean_squared_error(y_true, y_pred)
-        
+        base_loss_val = self.get_base_loss(y_true, y_pred)      
         y_noisy = tf.vectorized_map(self.apply_model, self.x_noisy)
         y_noisy_reshaped = tf.reshape(y_noisy, (self.x_noisy.shape[0], self.x_noisy.shape[1], 1))
         gy = self.extract_g(y_noisy, self.y_clean)
@@ -63,9 +72,10 @@ class CustomLoss(tf.keras.losses.Loss):
         ratio = tf.math.divide(gy_y_dist, self.bl_ratio)
         
         ratio = tf.cast(ratio, tf.float64)
-        base_loss = tf.cast(base_loss, tf.float64)
-        penalty = tf.math.multiply(base_loss, ratio)
-        loss = tf.math.add(base_loss, penalty)
+        base_loss_val = tf.cast(base_loss_val, tf.float64)
+        penalty = tf.math.multiply(base_loss_val, ratio)
+        loss = tf.math.add(base_loss_val, penalty)
+        
         return loss
 
 # customloss for dp

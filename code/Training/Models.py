@@ -186,6 +186,38 @@ class ActivationLogger(keras.callbacks.Callback):
                     os.mkdir(f"./activations/")
                 plt.savefig(f"./activations/activation_{layer_num}_epoch_{epoch}.png")
 
+# Create custom Tukey biweight loss function
+def tukey_biweight_loss(c=4.685):
+    """
+    Tukey biweight loss function.
+    
+    Args:
+        c: Tuning constant for the Tukey function (default: 4.685)
+        
+    Returns:
+        Keras loss function
+    """
+    def loss(y_true, y_pred):
+        # Ensure all tensors are float32
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+        residuals = y_true - y_pred
+        abs_residuals = tf.abs(residuals)
+        
+        # Calculate Tukey biweight loss
+        mask = tf.cast(abs_residuals <= c, tf.float32)
+        ratio = residuals / c
+        squared_ratio = tf.square(ratio)
+        
+        # When |residual| <= c: (c²/6) * [1 - (1 - (residual/c)²)³]
+        # When |residual| > c: c²/6
+        tukey_values = mask * (c**2 / 6.0) * (1.0 - tf.pow(1.0 - squared_ratio, 3.0)) + \
+                      (1.0 - mask) * (c**2 / 6.0)
+        
+        return tf.reduce_mean(tukey_values)
+    
+    return loss
+
 class LinearModel(BaseModel):
     def __init__(self, shape_input, loss_function, shape_output=1):
         """
@@ -270,6 +302,13 @@ class LinearModel(BaseModel):
     
             if self.loss_function == "msep":
                 self._compile_custom_loss(fit_args_copy, optimizer)
+            elif self.loss_function == "huber":
+                self.model.compile(optimizer=optimizer, loss=tf.keras.losses.Huber())
+            elif self.loss_function == "huberp":
+                self._compile_custom_loss(fit_args_copy, optimizer, base_loss="huber")
+            elif self.loss_function == "tukey":
+                # Use the custom Tukey biweight loss function
+                self.model.compile(optimizer=optimizer, loss=tukey_biweight_loss())              
             else:
                 self.model.compile(optimizer=optimizer, loss=self.loss_function)
 
@@ -281,7 +320,7 @@ class LinearModel(BaseModel):
     
             return self.model, history
     
-    def _compile_custom_loss(self, fit_args_copy, optimizer):
+    def _compile_custom_loss(self, fit_args_copy, optimizer, base_loss="mse"):
         metric = fit_args_copy["metric"]
         x_noisy_valid = fit_args_copy["x_noisy_valid"]
         x_noisy_train = fit_args_copy["x_noisy_train"]
@@ -303,7 +342,8 @@ class LinearModel(BaseModel):
         loss_inst = CustomLoss(model=self.model, metric=metric, 
                                y_clean=y_clean_train, x_noisy=x_noisy_train,
                                len_input_features=len_input_features, 
-                               bl_ratio=bl_ratio)
+                               bl_ratio=bl_ratio,
+                               base_loss=base_loss)
 
         self.model.compile(optimizer=optimizer, 
                            metrics=["mse", CustomMetric(model=self.model, y_clean=y_clean_valid, x_noisy=x_noisy_valid,
