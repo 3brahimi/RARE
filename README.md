@@ -19,14 +19,14 @@ The code generates datasets with noise, trains models, and evaluates their robus
 ## Installation
 1. **Clone the repository**:
 ```bash
-git clone https://github.com/3brahimi/RobuTT.git
-cd RobuTT/code
+git clone https://github.com/3brahimi/RARE.git
+cd RARE/code
 ```
 
 2. **Install requirements**: Create a conda environment and install the requirements file using the command:
 ```bash
-conda create --name robutt python=3.10
-conda activate robutt
+conda create --name rare python=3.10
+conda activate rare
 pip install -r requirements.txt
 ```
 ## Usage
@@ -104,7 +104,7 @@ The generated figure will be saved as a PNG file:
 
 Below is an example of the robustness evaluation figure:
 
-![Robustness Evaluation](https://github.com/3brahimi/RobuTT/blob/main/code/robustness_evaluation_figure2.png)
+![Robustness Evaluation](https://github.com/3brahimi/RARE/blob/main/code/robustness_evaluation_figure2.png)
 
 This figure presents the robustness metric across different noise types. The first row displays results for varying noise variances, while the second row shows results for different perturbation percentages.
 
